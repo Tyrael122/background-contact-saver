@@ -23,28 +23,17 @@ class ContactManagerService {
   }
 
   Future<bool> startService() async {
-    bool hasPermissions = await FlutterBackground.hasPermissions;
+    bool hasPermissions = await FlutterBackground.initialize(
+        androidConfig: _getBackgroundConfig());
     if (!hasPermissions) {
-      const androidConfig = FlutterBackgroundAndroidConfig(
-        notificationTitle: "flutter_background example app",
-        notificationText:
-            "Background notification for keeping the example app running in the background",
-        notificationImportance: AndroidNotificationImportance.Default,
-        notificationIcon:
-            AndroidResource(name: 'background_icon', defType: 'drawable'),
-      );
-
-      hasPermissions =
-          await FlutterBackground.initialize(androidConfig: androidConfig);
-      if (!hasPermissions) {
-        _statusLogger.logError(
-            "As permissões para rodar o serviço em segundo plano não foram concedidas.");
-        return false;
-      }
+      _statusLogger.logError(
+          "As permissões para rodar o serviço em segundo plano não foram concedidas.");
+      return false;
     }
 
     bool hasEnabledBackgroundExecution =
         await FlutterBackground.enableBackgroundExecution();
+
     if (!hasEnabledBackgroundExecution) {
       _statusLogger.logError("Ocorreu um erro ao inicializar o serviço.");
       return false;
@@ -72,8 +61,8 @@ class ContactManagerService {
     return true;
   }
 
-  Future<bool> _askForPermissions() async {
-    const androidConfig = FlutterBackgroundAndroidConfig(
+  FlutterBackgroundAndroidConfig _getBackgroundConfig() {
+    return const FlutterBackgroundAndroidConfig(
       notificationTitle: "flutter_background example app",
       notificationText:
           "Background notification for keeping the example app running in the background",
@@ -82,8 +71,6 @@ class ContactManagerService {
           AndroidResource(name: 'background_icon', defType: 'drawable'),
       showBadge: true,
     );
-
-    return await FlutterBackground.initialize(androidConfig: androidConfig);
   }
 
   void saveContactsNonExistent() {
