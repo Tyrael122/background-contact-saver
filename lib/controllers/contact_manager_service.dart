@@ -13,13 +13,18 @@ class ContactManagerService {
   final StatusLogger _statusLogger = StatusLogger();
   final SavedContactsLogger _savedContactsLogger = SavedContactsLogger();
 
-  final ContactAPIAdapter _contactAPIAdapter;
   final ContactManager _contactManager = ContactManager();
+  final ContactAPIAdapter _contactAPIAdapter;
+
+  late Timer backgroundThread;
 
   ContactManagerService(this._contactAPIAdapter);
 
   void setInterval(int requestIntervalInMin) {
     _requestIntervalInMin = requestIntervalInMin;
+
+    stopService();
+    startService();
   }
 
   Future<bool> startService() async {
@@ -39,13 +44,15 @@ class ContactManagerService {
       return false;
     }
 
-    // _startServiceThread();
+    backgroundThread = _startServiceThread();
 
     _statusLogger.logInfo("O serviço foi inicializado com sucesso.");
     return true;
   }
 
   Future<bool> stopService() async {
+    backgroundThread.cancel();
+
     if (FlutterBackground.isBackgroundExecutionEnabled) {
       bool hasServiceStoppedSucessfully =
           await FlutterBackground.disableBackgroundExecution();
@@ -100,8 +107,8 @@ class ContactManagerService {
     }
   }
 
-  void _startServiceThread() {
-    Timer.periodic(const Duration(seconds: 5), (timer) {
+  Timer _startServiceThread() {
+    return Timer.periodic(Duration(seconds: 5), (timer) {
       print("The background task is running.");
     });
   }
