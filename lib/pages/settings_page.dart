@@ -1,10 +1,17 @@
+import 'package:contacts_manager/controllers/contact_manager_service.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
-  const SettingsPage({super.key});
+  SettingsPage({super.key, required this.contactManagerService});
+
+  final ContactManagerService contactManagerService;
+  final _intervalRequestApiController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    _intervalRequestApiController.text =
+        contactManagerService.getRequestInterval().toString();
+
     return Center(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -25,16 +32,17 @@ class SettingsPage extends StatelessWidget {
                   title: const Text("Intervalo de requisições na API (min)"),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5)),
-                  trailing: const SizedBox(
+                  trailing: SizedBox(
                     width: 50,
                     height: 35,
                     child: TextField(
+                      controller: _intervalRequestApiController,
                       textAlignVertical: TextAlignVertical.top,
                       keyboardType: TextInputType.number,
                       maxLength: 2,
                       maxLines: 1,
-                      style: TextStyle(fontSize: 16, height: 1.2),
-                      decoration: InputDecoration(
+                      style: const TextStyle(fontSize: 16, height: 1.2),
+                      decoration: const InputDecoration(
                         isDense: true,
                         counterText: '',
                         border: OutlineInputBorder(),
@@ -46,7 +54,17 @@ class SettingsPage extends StatelessWidget {
                 );
               },
             ),
-          )
+          ),
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(0)),
+              ),
+              onPressed: () {
+                contactManagerService
+                    .setInterval(int.parse(_intervalRequestApiController.text));
+              },
+              child: const Text("Salvar"))
         ],
       ),
     );

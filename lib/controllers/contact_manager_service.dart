@@ -23,8 +23,12 @@ class ContactManagerService {
   void setInterval(int requestIntervalInMin) {
     _requestIntervalInMin = requestIntervalInMin;
 
-    stopService();
-    startService();
+    // stopService();
+    // startService();
+  }
+
+  int getRequestInterval() {
+    return _requestIntervalInMin;
   }
 
   Future<bool> startService() async {
@@ -108,7 +112,7 @@ class ContactManagerService {
   }
 
   Timer _startServiceThread() {
-    return Timer.periodic(Duration(seconds: 5), (timer) {
+    return Timer.periodic(Duration(seconds: _requestIntervalInMin), (timer) {
       print("The background task is running.");
     });
   }

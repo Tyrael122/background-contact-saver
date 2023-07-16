@@ -45,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
       case 0:
         return const HomePage();
       case 1:
-        return const SettingsPage();
+        return SettingsPage(contactManagerService: _contactManagerService,);
       default:
         return const Placeholder();
     }
