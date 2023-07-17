@@ -1,4 +1,16 @@
+import 'package:contacts_service/contacts_service.dart';
+
 class ContactManager {
-  bool isContactAlreadySavedInPhone(String contact) { return false; }
-  bool saveContact(String contact) { return false; }
+  Future<bool> isContactSavedInPhone(String contact) async {
+    List<Contact> matchedContacts = await ContactsService.getContactsForPhone(contact);
+
+    return matchedContacts.isNotEmpty;
+  }
+
+  Future<bool> saveContact(String contactPhone) async {
+    Contact newContact = Contact(givenName: contactPhone, phones: [Item(label: 'mobile', value: contactPhone)]);
+    ContactsService.addContact(newContact);
+
+    return await isContactSavedInPhone(contactPhone);
+  }
 }

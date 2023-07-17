@@ -84,7 +84,7 @@ class ContactManagerService {
     );
   }
 
-  void saveContactsNonExistent() {
+  void _saveNonExistentContacts() {
     List<String> contactsNotSent = _contactAPIAdapter.requestContactsNotSent();
     if (contactsNotSent.isEmpty) {
       _statusLogger.logInfo("A requisição não trouxe nenhum contato.");
@@ -94,14 +94,14 @@ class ContactManagerService {
     _saveContacts(contactsNotSent);
   }
 
-  void _saveContacts(List<String> contactsNotSent) {
+  Future<void> _saveContacts(List<String> contactsNotSent) async {
     for (String contact in contactsNotSent) {
-      if (_contactManager.isContactAlreadySavedInPhone(contact)) {
+      if (await _contactManager.isContactSavedInPhone(contact)) {
         _statusLogger.logInfo("Contato '$contact' já está salvo no celular.");
         continue;
       }
 
-      bool hasContactBeenSaved = _contactManager.saveContact(contact);
+      bool hasContactBeenSaved = await _contactManager.saveContact(contact);
       if (hasContactBeenSaved) {
         _savedContactsLogger.logInfo("Contato '$contact' salvo com sucesso.");
       } else {
@@ -113,7 +113,8 @@ class ContactManagerService {
 
   Timer _startServiceThread() {
     return Timer.periodic(Duration(seconds: _requestIntervalInMin), (timer) {
-      print("The background task is running.");
+      _saveNonExistentContacts();
+      // print("The background task is running.");
     });
   }
 }
