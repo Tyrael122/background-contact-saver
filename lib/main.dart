@@ -1,4 +1,5 @@
 import 'package:contacts_manager/controllers/contact_manager_service.dart';
+import 'package:contacts_manager/pages/add_contact_page.dart';
 import 'package:contacts_manager/pages/home_page.dart';
 import 'package:contacts_manager/pages/settings_page.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +46,11 @@ class _MyHomePageState extends State<MyHomePage> {
       case 0:
         return const HomePage();
       case 1:
-        return SettingsPage(contactManagerService: _contactManagerService,);
+        return SettingsPage(
+          contactManagerService: _contactManagerService,
+        );
+      case 2:
+        return const AddContactPage();
       default:
         return const Placeholder();
     }
@@ -55,6 +60,8 @@ class _MyHomePageState extends State<MyHomePage> {
     switch (selectedIndex) {
       case 1:
         return const Text("Configurações");
+      case 2:
+        return const Text("Cadastro de contato");
       default:
         return const Text("Gerenciador de contatos");
     }
@@ -104,6 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
           BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
           BottomNavigationBarItem(
               icon: Icon(Icons.settings), label: "Configurações"),
+          BottomNavigationBarItem(icon: Icon(Icons.add), label: "Cadastrar contato"),
         ],
         onTap: (int index) {
           setState(() {
