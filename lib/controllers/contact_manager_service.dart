@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:contacts_manager/Utils/saved_contacts_logger.dart';
 import 'package:contacts_manager/Utils/status_logger.dart';
 import 'package:contacts_manager/controllers/contact_manager.dart';
-import 'package:flutter_background/flutter_background.dart';
+import 'package:workmanager/workmanager.dart';
 
 import '../interfaces/contact_api_adapter.dart';
 
@@ -15,8 +15,6 @@ class ContactManagerService {
 
   final ContactManager _contactManager = ContactManager();
   final ContactAPIAdapter _contactAPIAdapter;
-
-  late Timer backgroundThread;
 
   ContactManagerService(this._contactAPIAdapter);
 
@@ -32,56 +30,31 @@ class ContactManagerService {
   }
 
   Future<bool> startService() async {
-    bool hasPermissions = await FlutterBackground.initialize(
-        androidConfig: _getBackgroundConfig());
-    if (!hasPermissions) {
-      _statusLogger.logError(
-          "As permissões para rodar o serviço em segundo plano não foram concedidas.");
-      return false;
-    }
+    Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
 
-    bool hasEnabledBackgroundExecution =
-        await FlutterBackground.enableBackgroundExecution();
-
-    if (!hasEnabledBackgroundExecution) {
-      _statusLogger.logError("Ocorreu um erro ao inicializar o serviço.");
-      return false;
-    }
-
-    backgroundThread = _startServiceThread();
+    _scheduleServiceTask();
 
     _statusLogger.logInfo("O serviço foi inicializado com sucesso.");
     return true;
   }
 
   Future<bool> stopService() async {
-    backgroundThread.cancel();
+    Workmanager().cancelAll();
 
-    if (FlutterBackground.isBackgroundExecutionEnabled) {
-      bool hasServiceStoppedSucessfully =
-          await FlutterBackground.disableBackgroundExecution();
-      if (hasServiceStoppedSucessfully) {
-        _statusLogger.logInfo("O serviço foi parado com sucesso.");
-      } else {
-        _statusLogger.logError("Ocorreu um erro ao parar o serviço.");
-      }
-      return hasServiceStoppedSucessfully;
-    }
-
-    _statusLogger.logInfo("O serviço não está ligado.");
+    _statusLogger.logInfo("O serviço foi parado com sucesso.");
     return true;
   }
 
-  FlutterBackgroundAndroidConfig _getBackgroundConfig() {
-    return const FlutterBackgroundAndroidConfig(
-      notificationTitle: "flutter_background example app",
-      notificationText:
-          "Background notification for keeping the example app running in the background",
-      notificationImportance: AndroidNotificationImportance.Default,
-      notificationIcon:
-          AndroidResource(name: 'background_icon', defType: 'drawable'),
-      showBadge: true,
-    );
+  @pragma('vm:entry-point')
+  void callbackDispatcher() {
+    Workmanager().executeTask((task, inputData) {
+      switch(task) {
+        case "fetchContactsFromApi":
+          _saveNonExistentContacts();
+          break;
+      }
+      return Future.value(true);
+    });
   }
 
   void _saveNonExistentContacts() {
@@ -111,10 +84,7 @@ class ContactManagerService {
     }
   }
 
-  Timer _startServiceThread() {
-    return Timer.periodic(Duration(seconds: _requestIntervalInMin), (timer) {
-      _saveNonExistentContacts();
-      // print("The background task is running.");
-    });
+  Future<void> _scheduleServiceTask() {
+    return Workmanager().registerPeriodicTask("fetchContactsFromApi", "fetchContactsFromApi");
   }
 }
