@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:contacts_manager/Utils/saved_contacts_logger.dart';
 import 'package:contacts_manager/Utils/status_logger.dart';
 import 'package:contacts_manager/controllers/contact_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../interfaces/contact_api_adapter.dart';
@@ -15,6 +16,8 @@ class ContactManagerService {
 
   final ContactManager _contactManager = ContactManager();
   final ContactAPIAdapter _contactAPIAdapter;
+
+  static const String _fetchApiTaskKey = "fetchContactsFromApi";
 
   ContactManagerService(this._contactAPIAdapter);
 
@@ -41,15 +44,20 @@ class ContactManagerService {
   Future<bool> stopService() async {
     Workmanager().cancelAll();
 
+    final preferences = await SharedPreferences.getInstance();
+    preferences.remove(_fetchApiTaskKey);
+
     _statusLogger.logInfo("O serviço foi parado com sucesso.");
     return true;
   }
 
   @pragma('vm:entry-point')
   void callbackDispatcher() {
-    Workmanager().executeTask((task, inputData) {
-      switch(task) {
-        case "fetchContactsFromApi":
+    Workmanager().executeTask((task, inputData) async {
+      final preferences = await SharedPreferences.getInstance();
+      switch (task) {
+        case _fetchApiTaskKey:
+          preferences.setBool(_fetchApiTaskKey, true);
           _saveNonExistentContacts();
           break;
       }
@@ -85,6 +93,13 @@ class ContactManagerService {
   }
 
   Future<void> _scheduleServiceTask() {
-    return Workmanager().registerPeriodicTask("fetchContactsFromApi", "fetchContactsFromApi");
+    return Workmanager()
+        .registerPeriodicTask(_fetchApiTaskKey, _fetchApiTaskKey);
+  }
+
+  Future<bool> isServiceOn() async {
+    final preferences = await SharedPreferences.getInstance();
+
+    return preferences.containsKey(_fetchApiTaskKey);
   }
 }

@@ -35,7 +35,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool _isServiceOn = false;
   final ContactManagerService _contactManagerService =
       ContactManagerService(ContactAPIAdapterXML());
 
@@ -87,19 +86,21 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 13),
-            child: Switch(
-              onChanged: (value) {
-                setState(() {
-                  _isServiceOn = value;
-                });
-                if (_isServiceOn) {
-                  _contactManagerService.startService();
-                } else {
-                  _contactManagerService.stopService();
-                }
+            child: FutureBuilder(
+              future: _contactManagerService.isServiceOn(),
+              builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+                return Switch(
+                  onChanged: (value) async {
+                    if (await _contactManagerService.isServiceOn()) {
+                      _contactManagerService.stopService();
+                    } else {
+                      _contactManagerService.startService();
+                    }
+                  },
+                  trackColor: trackColor,
+                  value: snapshot.hasData ? snapshot.data : false,
+                );
               },
-              trackColor: trackColor,
-              value: _isServiceOn,
             ),
           )
         ],
@@ -111,7 +112,8 @@ class _MyHomePageState extends State<MyHomePage> {
           BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
           BottomNavigationBarItem(
               icon: Icon(Icons.settings), label: "Configurações"),
-          BottomNavigationBarItem(icon: Icon(Icons.add), label: "Cadastrar contato"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add), label: "Cadastrar contato"),
         ],
         onTap: (int index) {
           setState(() {
