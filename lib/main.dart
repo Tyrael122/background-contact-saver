@@ -35,10 +35,25 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool _isServiceRunning = false;
+
   final ContactManagerService _contactManagerService =
       ContactManagerService(ContactAPIAdapterXML());
 
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _getServiceStatus();
+  }
+
+  Future<void> _getServiceStatus() async {
+    bool isRunning = await _contactManagerService.isServiceRunning();
+    setState(() {
+      _isServiceRunning = isRunning;
+    });
+  }
 
   Widget getBodyWidget(int selectedIndex) {
     switch (selectedIndex) {
@@ -66,7 +81,23 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  final MaterialStateProperty<Color?> trackColor =
+  void _toggleService(bool value) async {
+    if (value) {
+      _contactManagerService.startService().then((value) {
+        setState(() {
+          _isServiceRunning = value;
+        });
+      });
+    } else {
+      _contactManagerService.stopService().then((value) {
+        setState(() {
+          _isServiceRunning = !value;
+        });
+      });
+    }
+  }
+
+  final MaterialStateProperty<Color?> _trackColor =
       MaterialStateProperty.resolveWith<Color?>(
     (Set<MaterialState> states) {
       if (states.contains(MaterialState.selected)) {
@@ -86,21 +117,12 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 13),
-            child: FutureBuilder(
-              future: _contactManagerService.isServiceOn(),
-              builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-                return Switch(
-                  onChanged: (value) async {
-                    if (await _contactManagerService.isServiceOn()) {
-                      _contactManagerService.stopService();
-                    } else {
-                      _contactManagerService.startService();
-                    }
-                  },
-                  trackColor: trackColor,
-                  value: snapshot.hasData ? snapshot.data : false,
-                );
+            child: Switch(
+              onChanged: (value) {
+                _toggleService(value);
               },
+              trackColor: _trackColor,
+              value: _isServiceRunning,
             ),
           )
         ],

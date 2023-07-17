@@ -9,8 +9,7 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _intervalRequestApiController.text =
-        contactManagerService.getRequestInterval().toString();
+    _intervalRequestApiController.text = "15";
 
     return Center(
       child: Column(

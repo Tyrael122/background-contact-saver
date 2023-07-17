@@ -9,8 +9,6 @@ import 'package:workmanager/workmanager.dart';
 import '../interfaces/contact_api_adapter.dart';
 
 class ContactManagerService {
-  int _requestIntervalInMin = 5;
-
   final StatusLogger _statusLogger = StatusLogger();
   final SavedContactsLogger _savedContactsLogger = SavedContactsLogger();
 
@@ -18,24 +16,36 @@ class ContactManagerService {
   final ContactAPIAdapter _contactAPIAdapter;
 
   static const String _fetchApiTaskKey = "fetchContactsFromApi";
+  static const String _requestIntervalInMinKey = "requestIntervalInMin";
 
   ContactManagerService(this._contactAPIAdapter);
 
-  void setInterval(int requestIntervalInMin) {
-    _requestIntervalInMin = requestIntervalInMin;
+  void setInterval(int requestIntervalInMin) async {
+    final preferences = await SharedPreferences.getInstance();
+    preferences.setInt(_requestIntervalInMinKey, requestIntervalInMin);
 
     // stopService();
     // startService();
   }
 
-  int getRequestInterval() {
-    return _requestIntervalInMin;
+  Future<int> getRequestInterval() async {
+    final preferences = await SharedPreferences.getInstance();
+    int? requestIntervalInMin = preferences.getInt(_requestIntervalInMinKey);
+
+    if (requestIntervalInMin != null) {
+      return requestIntervalInMin;
+    } else {
+      setInterval(15);
+      return getRequestInterval();
+    }
   }
 
   Future<bool> startService() async {
     Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
 
     _scheduleServiceTask();
+
+    _setServiceAsOn();
 
     _statusLogger.logInfo("O serviço foi inicializado com sucesso.");
     return true;
@@ -44,8 +54,7 @@ class ContactManagerService {
   Future<bool> stopService() async {
     Workmanager().cancelAll();
 
-    final preferences = await SharedPreferences.getInstance();
-    preferences.remove(_fetchApiTaskKey);
+    _setServiceAsOff();
 
     _statusLogger.logInfo("O serviço foi parado com sucesso.");
     return true;
@@ -54,10 +63,8 @@ class ContactManagerService {
   @pragma('vm:entry-point')
   void callbackDispatcher() {
     Workmanager().executeTask((task, inputData) async {
-      final preferences = await SharedPreferences.getInstance();
       switch (task) {
         case _fetchApiTaskKey:
-          preferences.setBool(_fetchApiTaskKey, true);
           _saveNonExistentContacts();
           break;
       }
@@ -97,9 +104,18 @@ class ContactManagerService {
         .registerPeriodicTask(_fetchApiTaskKey, _fetchApiTaskKey);
   }
 
-  Future<bool> isServiceOn() async {
+  Future<bool> isServiceRunning() async {
     final preferences = await SharedPreferences.getInstance();
-
     return preferences.containsKey(_fetchApiTaskKey);
+  }
+
+  void _setServiceAsOn() async {
+    final preferences = await SharedPreferences.getInstance();
+    preferences.setBool(_fetchApiTaskKey, true);
+  }
+
+  void _setServiceAsOff() async {
+    final preferences = await SharedPreferences.getInstance();
+    preferences.remove(_fetchApiTaskKey);
   }
 }
