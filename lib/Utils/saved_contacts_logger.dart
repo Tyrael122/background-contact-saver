@@ -10,4 +10,8 @@ class SavedContactsLogger implements Logger {
   void logInfo(String message) {
     print(message);
   }
+
+  @override
+  // TODO: implement logStream
+  Stream<String> get logStream => throw UnimplementedError();
 }

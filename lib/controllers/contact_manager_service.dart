@@ -2,15 +2,17 @@ import 'dart:async';
 
 import 'package:contacts_manager/Utils/saved_contacts_logger.dart';
 import 'package:contacts_manager/Utils/status_logger.dart';
+import 'package:contacts_manager/components/status_logger_viewer.dart';
 import 'package:contacts_manager/controllers/contact_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../interfaces/contact_api_adapter.dart';
+import '../interfaces/logger.dart';
 
 class ContactManagerService {
-  final StatusLogger _statusLogger = StatusLogger();
-  final SavedContactsLogger _savedContactsLogger = SavedContactsLogger();
+  final Logger statusLogger = StatusLogger();
+  final Logger savedContactsLogger = SavedContactsLogger();
 
   final ContactManager _contactManager = ContactManager();
   final ContactAPIAdapter _contactAPIAdapter;
@@ -47,7 +49,7 @@ class ContactManagerService {
 
     _setServiceAsOn();
 
-    _statusLogger.logInfo("O serviço foi inicializado com sucesso.");
+    statusLogger.logInfo("O serviço foi inicializado com sucesso.");
     return true;
   }
 
@@ -56,7 +58,7 @@ class ContactManagerService {
 
     _setServiceAsOff();
 
-    _statusLogger.logInfo("O serviço foi parado com sucesso.");
+    statusLogger.logInfo("O serviço foi parado com sucesso.");
     return true;
   }
 
@@ -75,7 +77,7 @@ class ContactManagerService {
   void _saveNonExistentContacts() {
     List<String> contactsNotSent = _contactAPIAdapter.requestContactsNotSent();
     if (contactsNotSent.isEmpty) {
-      _statusLogger.logInfo("A requisição não trouxe nenhum contato.");
+      statusLogger.logInfo("A requisição não trouxe nenhum contato.");
       return;
     }
 
@@ -85,15 +87,15 @@ class ContactManagerService {
   Future<void> _saveContacts(List<String> contactsNotSent) async {
     for (String contact in contactsNotSent) {
       if (await _contactManager.isContactSavedInPhone(contact)) {
-        _statusLogger.logInfo("Contato '$contact' já está salvo no celular.");
+        statusLogger.logInfo("Contato '$contact' já está salvo no celular.");
         continue;
       }
 
       bool hasContactBeenSaved = await _contactManager.saveContact(contact);
       if (hasContactBeenSaved) {
-        _savedContactsLogger.logInfo("Contato '$contact' salvo com sucesso.");
+        savedContactsLogger.logInfo("Contato '$contact' salvo com sucesso.");
       } else {
-        _savedContactsLogger
+        savedContactsLogger
             .logError("Não foi possível salvar o contato '$contact'.");
       }
     }

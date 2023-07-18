@@ -1,8 +1,12 @@
 import 'package:contacts_manager/components/saved_contacts_history.dart';
+import 'package:contacts_manager/components/status_logger_viewer.dart';
+import 'package:contacts_manager/controllers/contact_manager_service.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final ContactManagerService contactManagerService;
+
+  const HomePage({super.key, required this.contactManagerService});
 
   @override
   Widget build(BuildContext context) {
@@ -17,13 +21,7 @@ class HomePage extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 33, right: 28),
-            child: Container(
-              height: 62,
-              width: 299,
-              decoration: BoxDecoration(
-                  color: const Color(0xFFD9D9D9),
-                  borderRadius: BorderRadius.circular(5)),
-            ),
+            child: StatusLoggerViewer(contactManagerService: contactManagerService),
           ),
           const SizedBox(height: 51),
           const Padding(

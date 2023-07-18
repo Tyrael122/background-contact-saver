@@ -1,3 +1,4 @@
+import 'package:contacts_manager/components/status_logger_viewer.dart';
 import 'package:contacts_manager/controllers/contact_manager_service.dart';
 import 'package:contacts_manager/pages/add_contact_page.dart';
 import 'package:contacts_manager/pages/home_page.dart';
@@ -58,7 +59,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget getBodyWidget(int selectedIndex) {
     switch (selectedIndex) {
       case 0:
-        return const HomePage();
+        return HomePage(
+          contactManagerService: _contactManagerService,
+        );
       case 1:
         return SettingsPage(
           contactManagerService: _contactManagerService,
