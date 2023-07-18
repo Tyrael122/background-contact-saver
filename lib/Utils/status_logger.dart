@@ -24,6 +24,7 @@ class StatusLogger implements Logger {
   void logInfo(String message) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     enforceLoggingConstraints(preferences);
+    message = formatMessage(message);
 
     _logController.add(message);
     preferences.setStringList(_statusLogKey, await _logController.stream.toList());
@@ -57,5 +58,14 @@ class StatusLogger implements Logger {
     _logController = StreamController<String>.broadcast();
 
     for (var element in tempList) { _logController.add(element); }
+  }
+
+  String formatMessage(String message) {
+    return "${getNowDateTimeWithoutMiliseconds()} - '$message'";
+  }
+
+  String getNowDateTimeWithoutMiliseconds() {
+    DateTime now = DateTime.now();
+    return "${now.day}-${now.month}-${now.year} ${now.hour}:${now.minute}:${now.second}";
   }
 }

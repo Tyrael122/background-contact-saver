@@ -11,6 +11,8 @@ class StatusLoggerViewer extends StatefulWidget {
 }
 
 class _StatusLoggerViewerState extends State<StatusLoggerViewer> {
+  final List<String> _logEntries = List.empty(growable: true);
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -23,12 +25,13 @@ class _StatusLoggerViewerState extends State<StatusLoggerViewer> {
           stream: widget.contactManagerService.statusLogger.logStream,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              return ListTile(
-                title: Text(snapshot.data!),
-              );
-            } else {
-              return const Text("Não há status a serem mostrados");
+              _logEntries.add(snapshot.data!);
             }
+            return ListView.builder(
+              reverse: true,
+              itemCount: _logEntries.length,
+              itemBuilder: (context, index) => Text(_logEntries[index]),
+            );
           }),
     );
   }
