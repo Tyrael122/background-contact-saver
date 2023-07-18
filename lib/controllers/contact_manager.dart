@@ -1,8 +1,11 @@
 import 'package:flutter_contacts/flutter_contacts.dart';
 
 class ContactManager {
-  Future<bool> isContactSavedInPhone(String contactPhone) async {
-    List<Contact> contacts = await FlutterContacts.getContacts();
+  static List<Contact> contacts = List.empty(growable: true);
+
+  bool isContactSavedInPhone(String contactPhone) {
+    contacts = [Contact(phones: [Phone("9999999")])];
+
     for (Contact contact in contacts) {
       for (Phone phone in contact.phones) {
         if (phone.number == contactPhone) return true;
