@@ -11,7 +11,7 @@ class StatusLoggerViewer extends StatefulWidget {
 }
 
 class _StatusLoggerViewerState extends State<StatusLoggerViewer> {
-  final List<String> _logEntries = List.empty(growable: true);
+  List<String> _logEntries = List.empty(growable: true);
 
   @override
   Widget build(BuildContext context) {
@@ -21,18 +21,21 @@ class _StatusLoggerViewerState extends State<StatusLoggerViewer> {
       decoration: BoxDecoration(
           color: const Color(0xFFD9D9D9),
           borderRadius: BorderRadius.circular(5)),
-      child: StreamBuilder(
-          stream: widget.contactManagerService.statusLogger.logStream,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              _logEntries.add(snapshot.data!);
-            }
-            return ListView.builder(
-              reverse: true,
-              itemCount: _logEntries.length,
-              itemBuilder: (context, index) => Text(_logEntries[index]),
-            );
-          }),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: StreamBuilder(
+            stream: widget.contactManagerService.statusLogger.logStream,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                _logEntries.insert(0, snapshot.data!);
+              }
+              return ListView.separated(
+                itemCount: _logEntries.length,
+                itemBuilder: (context, index) => Text(_logEntries[index]),
+                separatorBuilder: (BuildContext context, int index) { return const SizedBox(height: 5); },
+              );
+            }),
+      ),
     );
   }
 }

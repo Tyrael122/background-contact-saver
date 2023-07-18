@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:contacts_manager/Utils/saved_contacts_logger.dart';
 import 'package:contacts_manager/Utils/status_logger.dart';
-import 'package:contacts_manager/components/status_logger_viewer.dart';
+import 'package:contacts_manager/adapters/contact_api_adapter_xml.dart';
 import 'package:contacts_manager/controllers/contact_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
@@ -43,14 +43,19 @@ class ContactManagerService {
   }
 
   Future<bool> startService() async {
-    Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+    try {
+      Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
 
-    _scheduleServiceTask();
+      _scheduleServiceTask();
 
-    _setServiceAsOn();
+      _setServiceAsOn();
 
-    statusLogger.logInfo("O serviço foi inicializado com sucesso.");
-    return true;
+      statusLogger.logInfo("O serviço foi inicializado com sucesso.");
+      return true;
+    } on Exception {
+      statusLogger.logError("Ocorreu um erro ao inicializar o serviço.");
+      return false;
+    }
   }
 
   Future<bool> stopService() async {
@@ -60,18 +65,6 @@ class ContactManagerService {
 
     statusLogger.logInfo("O serviço foi parado com sucesso.");
     return true;
-  }
-
-  @pragma('vm:entry-point')
-  void callbackDispatcher() {
-    Workmanager().executeTask((task, inputData) async {
-      switch (task) {
-        case _fetchApiTaskKey:
-          _saveNonExistentContacts();
-          break;
-      }
-      return Future.value(true);
-    });
   }
 
   void _saveNonExistentContacts() {
@@ -120,4 +113,23 @@ class ContactManagerService {
     final preferences = await SharedPreferences.getInstance();
     preferences.remove(_fetchApiTaskKey);
   }
+
+  Future<bool> taskExecutionManager(
+      String task, Map<String, dynamic>? inputData) {
+    switch (task) {
+      case _fetchApiTaskKey:
+        _saveNonExistentContacts();
+        break;
+    }
+    return Future.value(true);
+  }
+}
+
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    ContactManagerService contactManagerService =
+        ContactManagerService(ContactAPIAdapterXML());
+    return contactManagerService.taskExecutionManager(task, inputData);
+  });
 }
