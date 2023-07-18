@@ -4,20 +4,24 @@ import 'package:contacts_manager/interfaces/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StatusLogger implements Logger {
-  StreamController<String> _logController = StreamController<String>.broadcast();
+  StreamController<String> _logController =
+      StreamController<String>.broadcast();
 
   static const String _statusLogKey = "statusLog";
   static const int _maxLogAmount = 10;
+
+  int logsCounter = 0;
 
   @override
   void logError(String message) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     enforceLoggingConstraints(preferences);
 
-    _logController.add(message);
-    preferences.setStringList(_statusLogKey, await _logController.stream.toList());
-
     print(message);
+
+    _logController.add(message);
+    preferences.setStringList(
+        _statusLogKey, await _logController.stream.toList());
   }
 
   @override
@@ -26,10 +30,14 @@ class StatusLogger implements Logger {
     enforceLoggingConstraints(preferences);
     message = formatMessage(message);
 
-    _logController.add(message);
-    preferences.setStringList(_statusLogKey, await _logController.stream.toList());
-
+    print(
+        "Quantidade de logs na stream: $logsCounter");
     print(message);
+
+    _logController.add(message);
+    logsCounter++;
+    preferences.setStringList(
+        _statusLogKey, await _logController.stream.toList());
   }
 
   @override
@@ -40,15 +48,16 @@ class StatusLogger implements Logger {
       addPreviousLogsToStream(preferences);
     }
 
-    if (await _logController.stream.length >= _maxLogAmount) {
-      deleteEarliestLog();
-    }
+    // if (await _logController.stream.length >= _maxLogAmount) {
+    //   deleteEarliestLog();
+    // }
   }
 
   void addPreviousLogsToStream(SharedPreferences preferences) {
     List<String>? logMessages = preferences.getStringList(_statusLogKey);
     for (String log in logMessages!) {
       _logController.add(log);
+      logsCounter++;
     }
   }
 
@@ -57,7 +66,9 @@ class StatusLogger implements Logger {
 
     _logController = StreamController<String>.broadcast();
 
-    for (var element in tempList) { _logController.add(element); }
+    for (var element in tempList) {
+      _logController.add(element);
+    }
   }
 
   String formatMessage(String message) {

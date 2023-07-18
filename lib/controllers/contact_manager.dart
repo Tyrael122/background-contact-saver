@@ -1,15 +1,19 @@
-import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 
 class ContactManager {
-  Future<bool> isContactSavedInPhone(String contact) async {
-    List<Contact> matchedContacts = await ContactsService.getContactsForPhone(contact);
+  Future<bool> isContactSavedInPhone(String contactPhone) async {
+    List<Contact> contacts = await FlutterContacts.getContacts();
+    for (Contact contact in contacts) {
+      for (Phone phone in contact.phones) {
+        if (phone.number == contactPhone) return true;
+      }
+    }
 
-    return matchedContacts.isNotEmpty;
+    return false;
   }
 
   Future<bool> saveContact(String contactPhone) async {
-    Contact newContact = Contact(givenName: contactPhone, phones: [Item(label: 'mobile', value: contactPhone)]);
-    ContactsService.addContact(newContact);
+    Contact(phones: [Phone(contactPhone)], displayName: contactPhone).insert();
 
     return await isContactSavedInPhone(contactPhone);
   }

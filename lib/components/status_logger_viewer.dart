@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:contacts_manager/controllers/contact_manager_service.dart';
 import 'package:flutter/material.dart';
 
@@ -11,7 +13,16 @@ class StatusLoggerViewer extends StatefulWidget {
 }
 
 class _StatusLoggerViewerState extends State<StatusLoggerViewer> {
-  List<String> _logEntries = List.empty(growable: true);
+  final List<String> _logEntries = List.empty(growable: true);
+  StreamSubscription<String>? _subscription;
+
+  _StatusLoggerViewerState() {
+    _subscription = widget.contactManagerService.statusLogger.logStream.listen((addedLog) {
+      setState(() {
+        _logEntries.insert(0, addedLog);
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +42,13 @@ class _StatusLoggerViewerState extends State<StatusLoggerViewer> {
               }
               return ListView.separated(
                 itemCount: _logEntries.length,
-                itemBuilder: (context, index) => Text(_logEntries[index]),
-                separatorBuilder: (BuildContext context, int index) { return const SizedBox(height: 5); },
+                itemBuilder: (context, index) {
+                  print("Quantidade de logs: ${_logEntries.length}");
+                  return Text(_logEntries[index]);
+                },
+                separatorBuilder: (BuildContext context, int index) {
+                  return const SizedBox(height: 5);
+                },
               );
             }),
       ),

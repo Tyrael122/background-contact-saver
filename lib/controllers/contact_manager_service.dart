@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:contacts_manager/Utils/saved_contacts_logger.dart';
 import 'package:contacts_manager/Utils/status_logger.dart';
-import 'package:contacts_manager/adapters/contact_api_adapter_xml.dart';
 import 'package:contacts_manager/controllers/contact_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../interfaces/contact_api_adapter.dart';
 import '../interfaces/logger.dart';
+import '../main.dart';
 
 class ContactManagerService {
   final Logger statusLogger = StatusLogger();
@@ -50,7 +50,7 @@ class ContactManagerService {
 
       _setServiceAsOn();
 
-      statusLogger.logInfo("O serviço foi inicializado com sucesso.");
+      statusLogger.logInfo("O serviço foi inicializado com sucesso. Service hashcode: $hashCode");
       return true;
     } on Exception {
       statusLogger.logError("Ocorreu um erro ao inicializar o serviço.");
@@ -105,7 +105,7 @@ class ContactManagerService {
 
   Future<void> _scheduleServiceTask() {
     return Workmanager()
-        .registerPeriodicTask(_fetchApiTaskKey, _fetchApiTaskKey);
+        .registerOneOffTask(_fetchApiTaskKey, _fetchApiTaskKey, initialDelay: const Duration(seconds: 5));
   }
 
   Future<bool> isServiceRunning() async {
@@ -137,8 +137,6 @@ class ContactManagerService {
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    ContactManagerService contactManagerService =
-        ContactManagerService(ContactAPIAdapterXML());
-    return contactManagerService.taskExecutionManager(task, inputData);
+    return MyHomePage.contactManagerService.taskExecutionManager(task, inputData);
   });
 }

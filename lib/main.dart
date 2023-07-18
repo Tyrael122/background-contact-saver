@@ -1,4 +1,3 @@
-import 'package:contacts_manager/components/status_logger_viewer.dart';
 import 'package:contacts_manager/controllers/contact_manager_service.dart';
 import 'package:contacts_manager/pages/add_contact_page.dart';
 import 'package:contacts_manager/pages/home_page.dart';
@@ -18,7 +17,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF386BF6)),
         useMaterial3: true,
@@ -31,15 +29,15 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
+  static final ContactManagerService contactManagerService =
+      ContactManagerService(ContactAPIAdapterXML());
+
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   bool _isServiceRunning = false;
-
-  final ContactManagerService _contactManagerService =
-      ContactManagerService(ContactAPIAdapterXML());
 
   int _selectedIndex = 0;
 
@@ -50,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _getServiceStatus() async {
-    bool isRunning = await _contactManagerService.isServiceRunning();
+    bool isRunning = await MyHomePage.contactManagerService.isServiceRunning();
     setState(() {
       _isServiceRunning = isRunning;
     });
@@ -60,11 +58,11 @@ class _MyHomePageState extends State<MyHomePage> {
     switch (selectedIndex) {
       case 0:
         return HomePage(
-          contactManagerService: _contactManagerService,
+          contactManagerService: MyHomePage.contactManagerService,
         );
       case 1:
         return SettingsPage(
-          contactManagerService: _contactManagerService,
+          contactManagerService: MyHomePage.contactManagerService,
         );
       case 2:
         return const AddContactPage();
@@ -86,13 +84,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _toggleService(bool value) async {
     if (value) {
-      _contactManagerService.startService().then((value) {
+      MyHomePage.contactManagerService.startService().then((value) {
         setState(() {
           _isServiceRunning = value;
         });
       });
     } else {
-      _contactManagerService.stopService().then((value) {
+      MyHomePage.contactManagerService.stopService().then((value) {
         setState(() {
           _isServiceRunning = !value;
         });
@@ -122,6 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: const EdgeInsets.only(right: 13),
             child: Switch(
               onChanged: (value) {
+                print("Toggling service, main hashCode: $hashCode");
                 _toggleService(value);
               },
               trackColor: _trackColor,

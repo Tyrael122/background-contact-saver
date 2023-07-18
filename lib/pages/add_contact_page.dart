@@ -1,5 +1,5 @@
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 
 class AddContactPage extends StatefulWidget {
   const AddContactPage({super.key});
@@ -10,7 +10,6 @@ class AddContactPage extends StatefulWidget {
 
 class _AddContactPageState extends State<AddContactPage> {
   Contact contact = Contact();
-  PostalAddress address = PostalAddress(label: "Home");
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -25,13 +24,13 @@ class _AddContactPageState extends State<AddContactPage> {
                   children: [
                     TextFormField(
                       decoration: const InputDecoration(labelText: 'First name'),
-                      onSaved: (v) => contact.givenName = v,
+                      // onSaved: (v) => contact.displayName = v,
                     ),
                     TextFormField(
                       decoration: const InputDecoration(labelText: 'Phone'),
-                      onSaved: (v) =>
-                      contact.phones = [Item(label: "mobile", value: v)],
-                      keyboardType: TextInputType.phone,
+                      // onSaved: (v) =>
+                      // contact.phones = [Item(label: "mobile", value: v)],
+                      // keyboardType: TextInputType.phone,
                     ),
                   ],
                 ),
@@ -40,7 +39,7 @@ class _AddContactPageState extends State<AddContactPage> {
             TextButton(
               onPressed: () {
                 _formKey.currentState?.save();
-                ContactsService.addContact(contact);
+                // ContactsService.addContact(contact);
               },
               child: const Text("Salvar"),
             )
