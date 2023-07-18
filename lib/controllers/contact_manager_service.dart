@@ -26,8 +26,8 @@ class ContactManagerService {
     final preferences = await SharedPreferences.getInstance();
     preferences.setInt(_requestIntervalInMinKey, requestIntervalInMin);
 
-    // stopService();
-    // startService();
+    stopService();
+    startService();
   }
 
   Future<int> getRequestInterval() async {
@@ -59,21 +59,30 @@ class ContactManagerService {
   }
 
   Future<bool> stopService() async {
-    Workmanager().cancelAll();
+    try {
+      Workmanager().cancelAll();
 
-    _setServiceAsOff();
+      _setServiceAsOff();
 
-    statusLogger.logInfo("O serviço foi parado com sucesso.");
-    return true;
+      statusLogger.logInfo("O serviço foi parado com sucesso.");
+      return true;
+    } on Exception {
+      statusLogger.logError("Ocorreu um erro ao parar o serviço.");
+      return false;
+    }
   }
 
   void _saveNonExistentContacts() {
     List<String> contactsNotSent = _contactAPIAdapter.requestContactsNotSent();
+    statusLogger.logInfo("Foi feita uma requisição para a API.");
+
     if (contactsNotSent.isEmpty) {
       statusLogger.logInfo("A requisição não trouxe nenhum contato.");
       return;
     }
 
+    statusLogger
+        .logInfo("A requisição trouxe ${contactsNotSent.length} contatos");
     _saveContacts(contactsNotSent);
   }
 
