@@ -1,12 +1,10 @@
-import 'package:contacts_manager/controllers/contact_manager_service.dart';
-import 'package:contacts_manager/pages/add_contact_page.dart';
+import 'package:contacts_manager/Utils/log_file_watcher.dart';
+import 'package:contacts_manager/controllers/android_contact_service_manager.dart';
 import 'package:contacts_manager/pages/home_page.dart';
 import 'package:contacts_manager/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 
-import 'adapters/contact_api_adapter_xml.dart';
-
-void main() {
+Future<void> main() async {
   runApp(const MyApp());
 }
 
@@ -29,8 +27,8 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
-  static final ContactManagerService contactManagerService =
-      ContactManagerService(ContactAPIAdapterXML());
+  static final AndroidContactServiceManager contactManagerService =
+      AndroidContactServiceManager();
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -57,15 +55,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget getBodyWidget(int selectedIndex) {
     switch (selectedIndex) {
       case 0:
-        return HomePage(
-          contactManagerService: MyHomePage.contactManagerService,
-        );
+        return const HomePage();
       case 1:
         return SettingsPage(
           contactManagerService: MyHomePage.contactManagerService,
         );
-      case 2:
-        return const AddContactPage();
       default:
         return const Placeholder();
     }

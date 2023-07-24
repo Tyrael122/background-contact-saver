@@ -1,10 +1,10 @@
-import 'package:contacts_manager/controllers/contact_manager_service.dart';
+import 'package:contacts_manager/controllers/android_contact_service_manager.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
   SettingsPage({super.key, required this.contactManagerService});
 
-  final ContactManagerService contactManagerService;
+  final AndroidContactServiceManager contactManagerService;
   final _intervalRequestApiController = TextEditingController();
 
   @override
