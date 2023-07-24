@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:contacts_manager/Utils/status_logger.dart';
-import 'package:flutter/services.dart';
+import 'package:contacts_manager/constants/android_plataform_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../interfaces/logger.dart';
@@ -12,10 +12,7 @@ class AndroidContactServiceManager {
   static const String _contactServiceKey = "fetchContactsFromApi";
   static const String _requestIntervalInMinKey = "requestIntervalInMin";
 
-  static const MethodChannel channel =
-      MethodChannel("br.makesoftware.contacts_manager/channel");
-
-  AndroidContactServiceManager();
+  final _channel = AndroidPlataformConstants.methodChannel;
 
   void setInterval(int requestIntervalInMin) async {
     final preferences = await SharedPreferences.getInstance();
@@ -73,25 +70,11 @@ class AndroidContactServiceManager {
   }
 
   Future<bool> _callAndroidMethodToStartService() async {
-    bool? hasStartedSucessfully =
-        await channel.invokeMethod<bool>("startService");
-
-    if (hasStartedSucessfully != null) {
-      return hasStartedSucessfully == true;
-    }
-
-    return false;
+    return await _channel.invokeMethod("startService");
   }
 
   Future<bool> _callAndroidMethodToStopService() async {
-    bool? hasStoppedSucessfully =
-        await channel.invokeMethod<bool>("stopService");
-
-    if (hasStoppedSucessfully != null) {
-      return hasStoppedSucessfully == true;
-    }
-
-    return false;
+    return await _channel.invokeMethod("stopService");
   }
 
   void _setServiceAsOn() async {
