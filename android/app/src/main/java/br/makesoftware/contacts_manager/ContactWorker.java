@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ContactWorker extends Worker {
+    FileLogger statusLogger = new FileLogger(getApplicationContext().getFilesDir(), "statusLogger");
+    FileLogger contactLogger = new FileLogger(getApplicationContext().getFilesDir(), "contactLogger");
+
     public ContactWorker(
             @NonNull Context context,
             @NonNull WorkerParameters params) {
