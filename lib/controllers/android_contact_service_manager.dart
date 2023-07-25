@@ -27,12 +27,14 @@ class AndroidContactServiceManager {
       bool hasStartedSucessfully = await _callAndroidMethodToStartService();
       if (hasStartedSucessfully) {
         _setServiceAsOn();
+        statusLogger.logInfo("O serviço foi iniciado com sucesso");
         return true;
       }
     } catch (e) {
       statusLogger.logError("Error starting the service: $e");
     }
 
+    statusLogger.logError("Error starting the service.");
     return false;
   }
 
@@ -41,14 +43,14 @@ class AndroidContactServiceManager {
       bool hasStoppedSucessfully = await _callAndroidMethodToStopService();
       if (hasStoppedSucessfully) {
         _setServiceAsOff();
+        statusLogger.logInfo("O serviço foi parado com sucesso.");
         return true;
       }
-
-      statusLogger.logInfo("O serviço foi parado com sucesso.");
-    } on Exception {
-      statusLogger.logError("Ocorreu um erro ao parar o serviço.");
+    } catch (e) {
+      statusLogger.logError("Ocorreu um erro ao parar o serviço: $e");
     }
 
+    statusLogger.logError("Ocorreu um erro ao parar o serviço.");
     return false;
   }
 

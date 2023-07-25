@@ -33,6 +33,9 @@ public class FileLogger {
             createLogDirectoryIfNotExists(logDir);
 
             String fileName = loggerName + ".txt";
+
+            System.out.println("Logger file path: " + logDir + fileName);
+
             fh = new FileHandler(logDir + fileName, appendToLogFile);
             fh.setFormatter(new CustomLogFormatter());
 

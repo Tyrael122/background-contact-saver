@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import br.makesoftware.contacts_manager.constants.LogConstants;
 
@@ -27,16 +28,19 @@ public class ContactWorker extends Worker {
     FileLogger statusLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.STATUS_LOGGER_NAME);
     FileLogger contactLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.CONTACT_LOGGER_NAME);
 
-    public ContactWorker(
-            @NonNull Context context,
-            @NonNull WorkerParameters params) {
+    public ContactWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
     }
 
     public static boolean stopAllServices(Context context) {
-        ListenableFuture<Operation.State.SUCCESS> result = WorkManager.getInstance(context).cancelAllWork().getResult();
+        Operation result = WorkManager.getInstance(context).cancelAllWork();
+//        try {
+//            result.getResult();
+//        } catch (ExecutionException | InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
 
-        return result.isDone();
+        return true;
     }
 
     @NonNull
@@ -64,7 +68,8 @@ public class ContactWorker extends Worker {
             }
 
             boolean hasContactBeenSaved = insertContact(contactPhone, contactPhone, getApplicationContext().getContentResolver());
-            if (hasContactBeenSaved) contactLogger.logInfo("Contato " + contactPhone + " salvo com sucesso.");
+            if (hasContactBeenSaved)
+                contactLogger.logInfo("Contato " + contactPhone + " salvo com sucesso.");
             else {
                 contactLogger.logInfo("Não foi possível salvar o contato '" + contactPhone + "'.");
             }
