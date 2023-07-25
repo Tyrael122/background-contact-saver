@@ -73,7 +73,7 @@ class AndroidContactServiceManager {
 
   Future<bool> _callAndroidMethodToStartService() async {
     return await _channel.invokeMethod(
-        "startService", {"requestInterval": _requestIntervalInMinKey});
+        "startService", {"requestInterval": await getRequestInterval()});
   }
 
   Future<bool> _callAndroidMethodToStopService() async {
