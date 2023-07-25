@@ -1,3 +1,4 @@
+import 'package:contacts_manager/constants/log_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,7 +17,7 @@ class _StatusLoggerViewerState extends State<StatusLoggerViewer> {
     return ChangeNotifierProvider<LogFileMonitor>(
       create: (context) {
         final logFileWatcher = LogFileMonitor();
-        logFileWatcher.startLogFileMonitoring();
+        logFileWatcher.startLogFileMonitoring(LogConstants.statusLogPath);
         return logFileWatcher;
       },
       child: Consumer<LogFileMonitor>(
@@ -32,7 +33,7 @@ class _StatusLoggerViewerState extends State<StatusLoggerViewer> {
               child: ListView.separated(
                 itemCount: logFileWatcher.logEntries.length,
                 itemBuilder: (context, index) {
-                  return Text(logFileWatcher.logEntries[index]);
+                  return Text(logFileWatcher.logEntries[index].log);
                 },
                 separatorBuilder: (BuildContext context, int index) {
                   return const SizedBox(height: 5);

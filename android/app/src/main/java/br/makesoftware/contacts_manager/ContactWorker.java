@@ -11,15 +11,21 @@ import android.os.RemoteException;
 import android.provider.ContactsContract;
 
 import androidx.annotation.NonNull;
+import androidx.work.Operation;
+import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import br.makesoftware.contacts_manager.constants.LogConstants;
+
 public class ContactWorker extends Worker {
-    FileLogger statusLogger = new FileLogger(getApplicationContext().getFilesDir(), "statusLogger");
-    FileLogger contactLogger = new FileLogger(getApplicationContext().getFilesDir(), "contactLogger");
+    FileLogger statusLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.STATUS_LOGGER_NAME);
+    FileLogger contactLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.CONTACT_LOGGER_NAME);
 
     public ContactWorker(
             @NonNull Context context,
@@ -27,34 +33,40 @@ public class ContactWorker extends Worker {
         super(context, params);
     }
 
+    public static boolean stopAllServices(Context context) {
+        ListenableFuture<Operation.State.SUCCESS> result = WorkManager.getInstance(context).cancelAllWork().getResult();
+
+        return result.isDone();
+    }
+
     @NonNull
     @Override
     public Result doWork() {
-        System.out.println("Trying to make a request to the API.");
+        statusLogger.logInfo("Trying to make a request to the API.");
         // TODO: Make the API request.
         List<String> contactsNotSent = List.of("222222222");
 
-        System.out.println("Foi feita uma requisição para a API.");
+        statusLogger.logInfo("Foi feita uma requisição para a API.");
         if (contactsNotSent.isEmpty()) {
-            System.out.println("A requisição não trouxe nenhum contato.");
+            statusLogger.logInfo("A requisição não trouxe nenhum contato.");
             return Result.success();
         }
 
-        System.out.println("A requisição trouxe " + contactsNotSent.size() + "contatos.");
+        statusLogger.logInfo("A requisição trouxe " + contactsNotSent.size() + " contatos.");
         return saveContacts(contactsNotSent);
     }
 
     private Result saveContacts(List<String> contactsNotSent) {
         for (String contactPhone : contactsNotSent) {
             if (isContactSavedInPhone(contactPhone)) {
-                System.out.println("O contato " + contactPhone + " já está salvo no celular.");
+                contactLogger.logInfo("O contato " + contactPhone + " já está salvo no celular.");
                 continue;
             }
 
             boolean hasContactBeenSaved = insertContact(contactPhone, contactPhone, getApplicationContext().getContentResolver());
-            if (hasContactBeenSaved) System.out.println("Contato " + contactPhone + " salvo com sucesso.");
+            if (hasContactBeenSaved) contactLogger.logInfo("Contato " + contactPhone + " salvo com sucesso.");
             else {
-                System.out.println("Não foi possível salvar o contato '" + contactPhone + "'.");
+                contactLogger.logInfo("Não foi possível salvar o contato '" + contactPhone + "'.");
             }
         }
 
