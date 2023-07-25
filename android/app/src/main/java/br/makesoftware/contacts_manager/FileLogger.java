@@ -11,9 +11,9 @@ public class FileLogger {
     public FileLogger(File filesDir, String loggerName) {
         logger = Logger.getLogger(loggerName);
 
-        setLoggerFile(logger, filesDir, loggerName);
+        setLogFile(filesDir, loggerName);
 
-        logger.setUseParentHandlers(false);
+//        setLoggerToNotLogToConsole();
     }
 
     public void logError(String message) {
@@ -24,17 +24,15 @@ public class FileLogger {
         logger.info(message);
     }
 
-    private void setLoggerFile(Logger logger, File filesDir, String loggerName) {
+    private void setLogFile(File filesDir, String loggerName) {
         FileHandler fh;
         try {
-            boolean appendToLogFile = false;
+            boolean appendToLogFile = true;
 
             String logDir = filesDir.getAbsolutePath() + "/logs/";
             createLogDirectoryIfNotExists(logDir);
 
             String fileName = loggerName + ".txt";
-
-            System.out.println("Logger file path: " + logDir + fileName);
 
             fh = new FileHandler(logDir + fileName, appendToLogFile);
             fh.setFormatter(new CustomLogFormatter());
@@ -51,4 +49,9 @@ public class FileLogger {
         if (!logDir.exists())
             logDir.mkdir();
     }
+
+    private void setLoggerToNotLogToConsole() {
+        logger.setUseParentHandlers(false);
+    }
+
 }

@@ -39,17 +39,22 @@ class LogFileMonitor extends ChangeNotifier {
 }
 
 class LogRecord {
-  late String timestamp;
-  late String message;
+  String timestamp = "";
+  String message = "";
 
   String separator = "-";
 
   LogRecord(String log) {
     int indexOfSeparator = log.indexOf(separator);
+    if (indexOfSeparator == -1) return;
 
     timestamp = log.substring(0, indexOfSeparator).trim();
     message = log.substring(indexOfSeparator + 2).trim();
   }
 
-  String get log => "$timestamp - $message";
+  String get log {
+    if (timestamp == "" && message == "") return "";
+    return "$timestamp - $message";
+  }
+
 }

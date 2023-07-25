@@ -33,12 +33,13 @@ public class ContactWorker extends Worker {
     }
 
     public static boolean stopAllServices(Context context) {
-        Operation result = WorkManager.getInstance(context).cancelAllWork();
-//        try {
-//            result.getResult();
-//        } catch (ExecutionException | InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
+        Operation operation = WorkManager.getInstance(context).cancelAllWork();
+
+        try {
+            operation.getResult().get();
+        } catch (ExecutionException | InterruptedException e) {
+            return false;
+        }
 
         return true;
     }
