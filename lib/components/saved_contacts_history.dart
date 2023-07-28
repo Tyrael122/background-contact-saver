@@ -2,7 +2,7 @@ import 'package:contacts_manager/constants/log_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../Utils/log_file_watcher.dart';
+import '../Utils/log_file_monitor.dart';
 
 class SavedContactsHistory extends StatelessWidget {
   const SavedContactsHistory({super.key});

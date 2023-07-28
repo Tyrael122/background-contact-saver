@@ -9,8 +9,6 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _intervalRequestApiController.text = "15";
-
     return Center(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -34,20 +32,32 @@ class SettingsPage extends StatelessWidget {
                   trailing: SizedBox(
                     width: 50,
                     height: 35,
-                    child: TextField(
-                      controller: _intervalRequestApiController,
-                      textAlignVertical: TextAlignVertical.top,
-                      keyboardType: TextInputType.number,
-                      maxLength: 2,
-                      maxLines: 1,
-                      style: const TextStyle(fontSize: 16, height: 1.2),
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        counterText: '',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
+                    child: FutureBuilder(
+                      future: contactManagerService.getRequestInterval(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<dynamic> snapshot) {
+                        _intervalRequestApiController.text = "15";
+
+                        if (snapshot.hasData) {
+                          _intervalRequestApiController.text = snapshot.data.toString();
+                        }
+
+                        return TextField(
+                          controller: _intervalRequestApiController,
+                          textAlignVertical: TextAlignVertical.top,
+                          keyboardType: TextInputType.number,
+                          maxLength: 2,
+                          maxLines: 1,
+                          style: const TextStyle(fontSize: 16, height: 1.2),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            counterText: '',
+                            border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 );

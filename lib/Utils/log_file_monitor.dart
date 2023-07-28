@@ -56,5 +56,4 @@ class LogRecord {
     if (timestamp == "" && message == "") return "";
     return "$timestamp - $message";
   }
-
 }

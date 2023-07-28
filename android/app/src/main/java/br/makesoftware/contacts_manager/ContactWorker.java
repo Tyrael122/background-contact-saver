@@ -16,8 +16,6 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -27,6 +25,7 @@ import br.makesoftware.contacts_manager.constants.LogConstants;
 public class ContactWorker extends Worker {
     FileLogger statusLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.STATUS_LOGGER_NAME);
     FileLogger contactLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.CONTACT_LOGGER_NAME);
+    private final ApiAdapter apiAdapter = new XmlApiAdapter();
 
     public ContactWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -48,8 +47,7 @@ public class ContactWorker extends Worker {
     @Override
     public Result doWork() {
         statusLogger.logInfo("Trying to make a request to the API.");
-        // TODO: Make the API request.
-        List<String> contactsNotSent = List.of("222222222");
+        List<String> contactsNotSent = apiAdapter.requestContactsNotSent();
 
         statusLogger.logInfo("Foi feita uma requisição para a API.");
         if (contactsNotSent.isEmpty()) {
@@ -62,6 +60,8 @@ public class ContactWorker extends Worker {
     }
 
     private Result saveContacts(List<String> contactsNotSent) {
+        boolean hasFailed = false;
+
         for (String contactPhone : contactsNotSent) {
             if (isContactSavedInPhone(contactPhone)) {
                 contactLogger.logInfo("O contato " + contactPhone + " já está salvo no celular.");
@@ -73,10 +73,12 @@ public class ContactWorker extends Worker {
                 contactLogger.logInfo("Contato " + contactPhone + " salvo com sucesso.");
             else {
                 contactLogger.logInfo("Não foi possível salvar o contato '" + contactPhone + "'.");
+                hasFailed = true;
             }
         }
 
-        return Result.success(); // TODO: Tell whether some contact couldn't be saved.
+        if (hasFailed) return Result.failure();
+        else return Result.success();
     }
 
     private boolean isContactSavedInPhone(String contactPhone) {
