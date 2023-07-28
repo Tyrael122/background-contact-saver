@@ -1,3 +1,4 @@
+import 'package:contacts_manager/components/service_switch.dart';
 import 'package:contacts_manager/controllers/android_contact_service_manager.dart';
 import 'package:contacts_manager/pages/home_page.dart';
 import 'package:contacts_manager/pages/settings_page.dart';
@@ -34,35 +35,12 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool _isServiceRunning = false;
-
+  final PageController _pageController = PageController(initialPage: 0);
   int _selectedIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _getServiceStatus();
-  }
-
-  Future<void> _getServiceStatus() async {
-    bool isRunning = await MyHomePage.contactManagerService.isServiceRunning();
-    setState(() {
-      _isServiceRunning = isRunning;
-    });
-  }
-
-  Widget getBodyWidget(int selectedIndex) {
-    switch (selectedIndex) {
-      case 0:
-        return const HomePage();
-      case 1:
-        return SettingsPage(
-          contactManagerService: MyHomePage.contactManagerService,
-        );
-      default:
-        return const Placeholder();
-    }
-  }
+  final List<Widget> _pages = [
+    const HomePage(),
+    SettingsPage()
+  ];
 
   Text getTitle(int selectedIndex) {
     switch (selectedIndex) {
@@ -73,32 +51,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void _toggleService(bool value) async {
-    if (value) {
-      MyHomePage.contactManagerService.startService().then((value) {
-        setState(() {
-          _isServiceRunning = value;
-        });
-      });
-    } else {
-      MyHomePage.contactManagerService.stopService().then((value) {
-        setState(() {
-          _isServiceRunning = !value;
-        });
-      });
-    }
-  }
-
-  final MaterialStateProperty<Color?> _trackColor =
-      MaterialStateProperty.resolveWith<Color?>(
-    (Set<MaterialState> states) {
-      if (states.contains(MaterialState.selected)) {
-        return Colors.black;
-      }
-      return null;
-    },
-  );
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,21 +58,18 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).primaryColor,
         title: getTitle(_selectedIndex),
         titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
-        actions: [
+        actions: const [
           Padding(
-            padding: const EdgeInsets.only(right: 13),
-            child: Switch(
-              onChanged: (value) {
-                print("Toggling service, main hashCode: $hashCode");
-                _toggleService(value);
-              },
-              trackColor: _trackColor,
-              value: _isServiceRunning,
-            ),
+            padding: EdgeInsets.only(right: 13),
+            child: ServiceSwitch(),
           )
         ],
       ),
-      body: getBodyWidget(_selectedIndex),
+      body: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: _pages,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         items: const [
@@ -132,8 +81,17 @@ class _MyHomePageState extends State<MyHomePage> {
           setState(() {
             _selectedIndex = index;
           });
+
+          _pageController.jumpToPage(index);
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+
+    super.dispose();
   }
 }

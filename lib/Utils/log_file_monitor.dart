@@ -4,18 +4,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class LogFileMonitor extends ChangeNotifier {
-  static const _refreshInterval = Duration(seconds: 2);
+  static const _refreshInterval = Duration(seconds: 5);
   List<LogRecord> logEntries = [];
+  late Timer _timer;
 
   void startLogFileMonitoring(Future<String> logFilePath) async {
-    Timer.periodic(_refreshInterval, (_) async {
-      final newLogEntries = await readLogFile(await logFilePath);
-      if (logEntries == newLogEntries) {
-        return;
-      }
+    Function runnable = getLogFileMonitoringFunction(await logFilePath);
+    runnable.call();
 
-      logEntries = newLogEntries;
-      notifyListeners();
+    _timer = Timer.periodic(_refreshInterval, (ignoredTimer) {
+      runnable.call();
     });
   }
 
@@ -35,6 +33,24 @@ class LogFileMonitor extends ChangeNotifier {
     }
 
     return newLogEntries;
+  }
+
+  Function getLogFileMonitoringFunction(String logFilePath) {
+    return () async {
+      final newLogEntries = await readLogFile(logFilePath);
+      if (logEntries == newLogEntries) {
+        return;
+      }
+
+      logEntries = newLogEntries;
+      notifyListeners();
+    };
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 }
 

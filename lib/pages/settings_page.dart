@@ -1,10 +1,9 @@
-import 'package:contacts_manager/controllers/android_contact_service_manager.dart';
+import 'package:contacts_manager/main.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
-  SettingsPage({super.key, required this.contactManagerService});
+  SettingsPage({super.key});
 
-  final AndroidContactServiceManager contactManagerService;
   final _intervalRequestApiController = TextEditingController();
 
   @override
@@ -33,13 +32,15 @@ class SettingsPage extends StatelessWidget {
                     width: 50,
                     height: 35,
                     child: FutureBuilder(
-                      future: contactManagerService.getRequestInterval(),
+                      future:
+                          MyHomePage.contactManagerService.getRequestInterval(),
                       builder: (BuildContext context,
                           AsyncSnapshot<dynamic> snapshot) {
                         _intervalRequestApiController.text = "15";
 
                         if (snapshot.hasData) {
-                          _intervalRequestApiController.text = snapshot.data.toString();
+                          _intervalRequestApiController.text =
+                              snapshot.data.toString();
                         }
 
                         return TextField(
@@ -70,7 +71,7 @@ class SettingsPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(0)),
               ),
               onPressed: () {
-                contactManagerService
+                MyHomePage.contactManagerService
                     .setInterval(int.parse(_intervalRequestApiController.text));
               },
               child: const Text("Salvar"))
