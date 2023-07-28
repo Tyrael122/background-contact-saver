@@ -7,24 +7,34 @@ import java.util.logging.Logger;
 
 public class FileLogger {
     private final Logger logger;
+    private final File filesDir;
 
     public FileLogger(File filesDir, String loggerName) {
-        logger = Logger.getLogger(loggerName);
+        this.filesDir = filesDir;
 
-        setLogFile(filesDir, loggerName);
+        logger = Logger.getLogger(loggerName);
 
 //        setLoggerToNotLogToConsole();
     }
 
     public void logError(String message) {
-        logger.severe(message);
+        logToFile(() -> logger.severe(message));
     }
 
     public void logInfo(String message) {
-        logger.info(message);
+        logToFile(() -> logger.info(message));
     }
 
-    private void setLogFile(File filesDir, String loggerName) {
+    public void logToFile(Runnable loggerFunction) {
+        FileHandler fh = getFileHandlerToLogToFile();
+        logger.addHandler(fh);
+
+        loggerFunction.run();
+
+        fh.close();
+    }
+
+    private FileHandler getFileHandlerToLogToFile() {
         FileHandler fh;
         try {
             boolean appendToLogFile = true;
@@ -32,26 +42,23 @@ public class FileLogger {
             String logDir = filesDir.getAbsolutePath() + "/logs/";
             createLogDirectoryIfNotExists(logDir);
 
-            String fileName = loggerName + ".txt";
+            String fileName = logger.getName() + ".txt";
 
             fh = new FileHandler(logDir + fileName, appendToLogFile);
             fh.setFormatter(new CustomLogFormatter());
 
+            return fh;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        logger.addHandler(fh);
     }
 
     private static void createLogDirectoryIfNotExists(String filesDir) throws IOException {
         File logDir = new File(filesDir);
-        if (!logDir.exists())
-            logDir.mkdir();
+        if (!logDir.exists()) logDir.mkdir();
     }
 
     private void setLoggerToNotLogToConsole() {
         logger.setUseParentHandlers(false);
     }
-
 }
