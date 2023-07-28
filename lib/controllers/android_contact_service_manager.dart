@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:contacts_manager/Utils/status_logger.dart';
 import 'package:contacts_manager/constants/android_plataform_constants.dart';
+import 'package:contacts_manager/utils/permission_manager.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../interfaces/logger.dart';
@@ -17,12 +19,16 @@ class AndroidContactServiceManager {
   void setInterval(int requestIntervalInMin) async {
     final preferences = await SharedPreferences.getInstance();
     preferences.setInt(_requestIntervalInMinKey, requestIntervalInMin);
-
-    stopService();
-    startService();
   }
 
   Future<bool> startService() async {
+    bool isPermissionGranted = await PermissionManager.requestPermission(Permission.contacts);
+
+    if (!isPermissionGranted) {
+      statusLogger.logError("O serviço não possui as permissões necessárias para ser executado.");
+      return false;
+    }
+
     try {
       bool hasStartedSucessfully = await _callAndroidMethodToStartService();
       if (hasStartedSucessfully) {
