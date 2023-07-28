@@ -1,7 +1,6 @@
 package br.makesoftware.contacts_manager;
 
 import androidx.annotation.NonNull;
-import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
@@ -22,10 +21,7 @@ public class MainActivity extends FlutterActivity {
             switch (call.method) {
                 case "startService":
                     int repeatInterval = call.argument("requestInterval");
-//                    PeriodicWorkRequest contactsWorkRequest = new PeriodicWorkRequest.Builder(ContactWorker.class, repeatInterval, TimeUnit.MINUTES).build();
-                    OneTimeWorkRequest contactsWorkRequest = new OneTimeWorkRequest.Builder(ContactWorker.class)
-                            .setInitialDelay(10, TimeUnit.SECONDS)
-                            .build();
+                    PeriodicWorkRequest contactsWorkRequest = new PeriodicWorkRequest.Builder(ContactWorker.class, repeatInterval, TimeUnit.MINUTES).build();
 
                     WorkManager.getInstance(getApplicationContext()).enqueue(contactsWorkRequest);
 
