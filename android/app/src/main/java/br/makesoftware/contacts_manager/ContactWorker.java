@@ -11,6 +11,8 @@ import android.os.RemoteException;
 import android.provider.ContactsContract;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Operation;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
@@ -20,7 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import br.makesoftware.contacts_manager.adapters.XmlApiAdapter;
 import br.makesoftware.contacts_manager.constants.LogConstants;
+import br.makesoftware.contacts_manager.interfaces.ApiAdapter;
+import br.makesoftware.contacts_manager.utils.FileLogger;
+import br.makesoftware.contacts_manager.utils.NotificationSender;
 
 public class ContactWorker extends Worker {
     FileLogger statusLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.STATUS_LOGGER_NAME);
@@ -56,7 +62,12 @@ public class ContactWorker extends Worker {
         }
 
         statusLogger.logInfo("A requisição trouxe " + contactsNotSent.size() + " contatos.");
-        return saveContacts(contactsNotSent);
+
+        Result result = saveContacts(contactsNotSent);
+
+        NotificationSender.sendNotification(getApplicationContext(), MainActivity.CHANNEL);
+
+        return result;
     }
 
     private Result saveContacts(List<String> contactsNotSent) {

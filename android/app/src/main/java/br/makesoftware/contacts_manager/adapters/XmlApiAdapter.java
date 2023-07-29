@@ -1,6 +1,8 @@
-package br.makesoftware.contacts_manager;
+package br.makesoftware.contacts_manager.adapters;
 
 import java.util.List;
+
+import br.makesoftware.contacts_manager.interfaces.ApiAdapter;
 
 public class XmlApiAdapter implements ApiAdapter {
     @Override

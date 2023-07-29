@@ -1,4 +1,4 @@
-package br.makesoftware.contacts_manager;
+package br.makesoftware.contacts_manager.interfaces;
 
 import java.util.List;
 

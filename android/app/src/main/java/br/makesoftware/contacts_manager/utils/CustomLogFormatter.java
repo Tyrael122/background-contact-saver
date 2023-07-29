@@ -1,4 +1,4 @@
-package br.makesoftware.contacts_manager;
+package br.makesoftware.contacts_manager.utils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

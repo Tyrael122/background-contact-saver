@@ -1,9 +1,11 @@
-package br.makesoftware.contacts_manager;
+package br.makesoftware.contacts_manager.utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
+
+import br.makesoftware.contacts_manager.utils.CustomLogFormatter;
 
 public class FileLogger {
     private final Logger logger;

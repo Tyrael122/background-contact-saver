@@ -1,18 +1,32 @@
 package br.makesoftware.contacts_manager;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
+import android.os.Bundle;
+
 import androidx.annotation.NonNull;
+import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import java.util.concurrent.TimeUnit;
 
 import br.makesoftware.contacts_manager.constants.LogConstants;
+import br.makesoftware.contacts_manager.utils.FileLogger;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 
 public class MainActivity extends FlutterActivity {
-    private static final String CHANNEL = "br.makesoftware.contacts_manager/channel";
+    public static final String CHANNEL = "br.makesoftware.contacts_manager/channel";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        createNotificationChannel();
+    }
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
@@ -22,6 +36,9 @@ public class MainActivity extends FlutterActivity {
                 case "startService":
                     int repeatInterval = call.argument("requestInterval");
                     PeriodicWorkRequest contactsWorkRequest = new PeriodicWorkRequest.Builder(ContactWorker.class, repeatInterval, TimeUnit.MINUTES).build();
+//                    OneTimeWorkRequest contactsWorkRequest = new OneTimeWorkRequest.Builder(ContactWorker.class)
+//                            .setInitialDelay(10, TimeUnit.SECONDS)
+//                            .build();
 
                     WorkManager.getInstance(getApplicationContext()).enqueue(contactsWorkRequest);
 
@@ -42,6 +59,20 @@ public class MainActivity extends FlutterActivity {
                     break;
             }
         });
+    }
+
+    public void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Example Channel";
+            String description = "This is an example notification channel";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+
+            NotificationChannel channel = new NotificationChannel(CHANNEL, name, importance);
+            channel.setDescription(description);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 }
 
