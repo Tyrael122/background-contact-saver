@@ -6,14 +6,13 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import java.util.concurrent.TimeUnit;
 
-import br.makesoftware.contacts_manager.constants.LogConstants;
 import br.makesoftware.contacts_manager.utils.FileLogger;
+import br.makesoftware.contacts_manager.constants.LogType;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodCall;
@@ -43,10 +42,10 @@ public class MainActivity extends FlutterActivity {
                     result.success(hasStoppedSucessfully);
                     break;
                 case "logError":
-                    new FileLogger(getApplicationContext().getFilesDir(), LogConstants.STATUS_LOGGER_NAME).logError(call.argument("message"));
+                    new FileLogger(getApplicationContext().getFilesDir()).logError(call.argument("message"), LogType.STATUS);
                     break;
                 case "logInfo":
-                    new FileLogger(getApplicationContext().getFilesDir(), LogConstants.STATUS_LOGGER_NAME).logInfo(call.argument("message"));
+                    new FileLogger(getApplicationContext().getFilesDir()).logInfo(call.argument("message"), LogType.STATUS);
                     break;
                 default:
                     result.notImplemented();

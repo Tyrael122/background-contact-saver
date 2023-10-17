@@ -7,35 +7,29 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
-import android.os.Environment;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Operation;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import org.json.JSONException;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import br.makesoftware.contacts_manager.adapters.XmlApiAdapter;
-import br.makesoftware.contacts_manager.constants.LogConstants;
 import br.makesoftware.contacts_manager.interfaces.ApiAdapter;
 import br.makesoftware.contacts_manager.utils.FileLogger;
-import br.makesoftware.contacts_manager.utils.NotificationSender;
+import br.makesoftware.contacts_manager.utils.ConcernedPeopleNotifier;
+import br.makesoftware.contacts_manager.constants.LogType;
 
 public class ContactWorker extends Worker {
-    private FileLogger statusLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.STATUS_LOGGER_NAME);
-    private FileLogger contactLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.CONTACT_LOGGER_NAME);
-    private final ApiAdapter apiAdapter = new XmlApiAdapter(statusLogger);
+    private final FileLogger fileLogger = new FileLogger(getApplicationContext().getFilesDir());
+    private final ConcernedPeopleNotifier concernedPeopleNotifier = new ConcernedPeopleNotifier(fileLogger, getApplicationContext());
+    private final ApiAdapter apiAdapter = new XmlApiAdapter(fileLogger);
 
     public ContactWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -56,29 +50,36 @@ public class ContactWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        statusLogger.logInfo("Tentando fazer uma requisição para a API.");
+        fileLogger.logInfo("Tentando fazer uma requisição para a API.", LogType.STATUS);
+
+        Result workResult;
 
         List<String> contactsNotSent;
         try {
             contactsNotSent = apiAdapter.requestContactsNotSent();
         } catch (Exception e) {
-            statusLogger.logError("Ocorreu um erro ao fazer uma requisição para a API: " + e.getMessage());
+            String errorMessage =  "Ocorreu um erro ao fazer uma requisição para a API: " + e.getMessage();
+            concernedPeopleNotifier.sendErrorMessage(errorMessage);
+
             return Result.failure();
         }
 
-        statusLogger.logInfo("Foi feita uma requisição para a API.");
+        fileLogger.logInfo("Foi feita uma requisição para a API.", LogType.STATUS);
+
+        String infoMessage;
+
         if (contactsNotSent.isEmpty()) {
-            statusLogger.logInfo("A requisição não trouxe nenhum contato.");
-            return Result.success();
+            infoMessage = "A requisição não trouxe nenhum contato.";
+            workResult = Result.success();
+
+        } else {
+            infoMessage = "A requisição trouxe " + contactsNotSent.size() + " contatos.";
+            workResult = saveContacts(contactsNotSent);
         }
 
-        statusLogger.logInfo("A requisição trouxe " + contactsNotSent.size() + " contatos.");
+        concernedPeopleNotifier.sendInfoMessage(infoMessage);
 
-        Result result = saveContacts(contactsNotSent);
-
-        NotificationSender.sendNotification(getApplicationContext(), MainActivity.CHANNEL);
-
-        return result;
+        return workResult;
     }
 
     private Result saveContacts(List<String> contactsNotSent) {
@@ -86,15 +87,15 @@ public class ContactWorker extends Worker {
 
         for (String contactPhone : contactsNotSent) {
             if (isContactSavedInPhone(contactPhone)) {
-                contactLogger.logInfo("O contato " + contactPhone + " já está salvo no celular.");
+                fileLogger.logInfo("O contato " + contactPhone + " já está salvo no celular.", LogType.CONTACT);
                 continue;
             }
 
             boolean hasContactBeenSaved = insertContact(contactPhone, contactPhone, getApplicationContext().getContentResolver());
             if (hasContactBeenSaved)
-                contactLogger.logInfo("Contato " + contactPhone + " salvo com sucesso.");
+                fileLogger.logInfo("Contato " + contactPhone + " salvo com sucesso.", LogType.CONTACT);
             else {
-                contactLogger.logInfo("Não foi possível salvar o contato '" + contactPhone + "'.");
+                fileLogger.logInfo("Não foi possível salvar o contato '" + contactPhone + "'.", LogType.CONTACT);
                 hasFailed = true;
             }
         }

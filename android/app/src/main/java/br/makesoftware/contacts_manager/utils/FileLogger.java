@@ -3,40 +3,38 @@ package br.makesoftware.contacts_manager.utils;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.FileHandler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import br.makesoftware.contacts_manager.utils.CustomLogFormatter;
+import br.makesoftware.contacts_manager.constants.LogType;
 
 public class FileLogger {
-    private final Logger logger;
     private final File filesDir;
 
-    public FileLogger(File filesDir, String loggerName) {
+    public FileLogger(File filesDir) {
         this.filesDir = filesDir;
-
-        logger = Logger.getLogger(loggerName);
-
-//        setLoggerToNotLogToConsole();
     }
 
-    public void logError(String message) {
-        logToFile(() -> logger.severe(message));
+    public void logError(String message, LogType logType) {
+        logToFile(message, Level.SEVERE, logType.toString());
     }
 
-    public void logInfo(String message) {
-        logToFile(() -> logger.info(message));
+    public void logInfo(String message, LogType logType) {
+        logToFile(message, Level.INFO, logType.toString());
     }
 
-    private void logToFile(Runnable loggerFunction) {
-        FileHandler fh = getFileHandlerToLogToFile();
+    private void logToFile(String message, Level logLevel, String logFilename) {
+        Logger logger = Logger.getAnonymousLogger();
+
+        FileHandler fh = getFileHandlerToLogToFile(logFilename);
         logger.addHandler(fh);
 
-        loggerFunction.run();
+        logger.log(logLevel, message);
 
         fh.close();
     }
 
-    private FileHandler getFileHandlerToLogToFile() {
+    private FileHandler getFileHandlerToLogToFile(String logFilename) {
         FileHandler fh;
         try {
             boolean appendToLogFile = true;
@@ -44,7 +42,7 @@ public class FileLogger {
             String logDir = filesDir.getAbsolutePath() + "/logs/";
             createLogDirectoryIfNotExists(logDir);
 
-            String fileName = logger.getName() + ".txt";
+            String fileName = logFilename + ".txt";
 
             fh = new FileHandler(logDir + fileName, appendToLogFile);
             fh.setFormatter(new CustomLogFormatter());
@@ -58,9 +56,5 @@ public class FileLogger {
     private static void createLogDirectoryIfNotExists(String filesDir) throws IOException {
         File logDir = new File(filesDir);
         if (!logDir.exists()) logDir.mkdir();
-    }
-
-    private void setLoggerToNotLogToConsole() {
-        logger.setUseParentHandlers(false);
     }
 }

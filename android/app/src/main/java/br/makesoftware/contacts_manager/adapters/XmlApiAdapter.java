@@ -23,11 +23,12 @@ import java.util.List;
 import br.makesoftware.contacts_manager.constants.EndpointsConstants;
 import br.makesoftware.contacts_manager.interfaces.ApiAdapter;
 import br.makesoftware.contacts_manager.utils.FileLogger;
+import br.makesoftware.contacts_manager.constants.LogType;
 
 public class XmlApiAdapter implements ApiAdapter {
-    private FileLogger statusLogger;
-    public XmlApiAdapter(FileLogger statusLogger) {
-        this.statusLogger = statusLogger;
+    private FileLogger fileLogger;
+    public XmlApiAdapter(FileLogger fileLogger) {
+        this.fileLogger = fileLogger;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -42,7 +43,7 @@ public class XmlApiAdapter implements ApiAdapter {
             
             phoneNumbers = parsePhoneNumbersFromJsonResponse(in);
         } catch (JSONException e) {
-            statusLogger.logError("Ocorreu um erro ao obter o corpo da resposta http da API: '" + e.getMessage() + "'");
+            fileLogger.logError("Ocorreu um erro ao obter o corpo da resposta http da API: '" + e.getMessage() + "'", LogType.STATUS);
             throw new RuntimeException(e);
         } finally {
             urlConnection.disconnect();
@@ -75,7 +76,7 @@ public class XmlApiAdapter implements ApiAdapter {
             StringBuilder jsonStringBuilder = parseStringFromInputStream(in);
             jsonString = sanitizeJsonStringBuilder(jsonStringBuilder);
         } catch (IOException e) {
-            statusLogger.logError("Ocorreu um erro ao concatenar em uma string o JSON retornado pela API:" + e.getMessage());
+            fileLogger.logError("Ocorreu um erro ao concatenar em uma string o JSON retornado pela API:" + e.getMessage(), LogType.STATUS);
             throw new RuntimeException(e);
         }
 
