@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class LogFileMonitor extends ChangeNotifier {
-  static const _refreshInterval = Duration(seconds: 5);
+  static const _refreshInterval = Duration(seconds: 2);
   List<LogRecord> logEntries = [];
   late Timer _timer;
 
