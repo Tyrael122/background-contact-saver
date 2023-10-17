@@ -16,6 +16,7 @@ import br.makesoftware.contacts_manager.constants.LogConstants;
 import br.makesoftware.contacts_manager.utils.FileLogger;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
 public class MainActivity extends FlutterActivity {
@@ -34,15 +35,8 @@ public class MainActivity extends FlutterActivity {
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL).setMethodCallHandler((call, result) -> {
             switch (call.method) {
                 case "startService":
-                    int repeatInterval = call.argument("requestInterval");
-                    PeriodicWorkRequest contactsWorkRequest = new PeriodicWorkRequest.Builder(ContactWorker.class, repeatInterval, TimeUnit.MINUTES).build();
-//                    OneTimeWorkRequest contactsWorkRequest = new OneTimeWorkRequest.Builder(ContactWorker.class)
-//                            .setInitialDelay(10, TimeUnit.SECONDS)
-//                            .build();
-
-                    WorkManager.getInstance(getApplicationContext()).enqueue(contactsWorkRequest);
-
-                    result.success(true);
+                    boolean success = tryStartPeriodicService(call);
+                    result.success(success);
                     break;
                 case "stopService":
                     boolean hasStoppedSucessfully = ContactWorker.stopAllServices(getApplicationContext());
@@ -59,6 +53,22 @@ public class MainActivity extends FlutterActivity {
                     break;
             }
         });
+    }
+
+    private boolean tryStartPeriodicService(MethodCall call) {
+        try {
+            int repeatInterval = call.argument("requestInterval");
+            PeriodicWorkRequest contactsWorkRequest = new PeriodicWorkRequest.Builder(ContactWorker.class, repeatInterval, TimeUnit.MINUTES).build();
+//            OneTimeWorkRequest contactsWorkRequest = new OneTimeWorkRequest.Builder(ContactWorker.class)
+//                    .setInitialDelay(10, TimeUnit.SECONDS)
+//                    .build();
+
+            WorkManager.getInstance(getApplicationContext()).enqueue(contactsWorkRequest);
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
     }
 
     public void createNotificationChannel() {

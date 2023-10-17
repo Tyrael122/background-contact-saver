@@ -7,6 +7,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
+import android.os.Environment;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
 
@@ -18,6 +19,9 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import org.json.JSONException;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -29,9 +33,9 @@ import br.makesoftware.contacts_manager.utils.FileLogger;
 import br.makesoftware.contacts_manager.utils.NotificationSender;
 
 public class ContactWorker extends Worker {
-    FileLogger statusLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.STATUS_LOGGER_NAME);
-    FileLogger contactLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.CONTACT_LOGGER_NAME);
-    private final ApiAdapter apiAdapter = new XmlApiAdapter();
+    private FileLogger statusLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.STATUS_LOGGER_NAME);
+    private FileLogger contactLogger = new FileLogger(getApplicationContext().getFilesDir(), LogConstants.CONTACT_LOGGER_NAME);
+    private final ApiAdapter apiAdapter = new XmlApiAdapter(statusLogger);
 
     public ContactWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -52,8 +56,15 @@ public class ContactWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        statusLogger.logInfo("Trying to make a request to the API.");
-        List<String> contactsNotSent = apiAdapter.requestContactsNotSent();
+        statusLogger.logInfo("Tentando fazer uma requisição para a API.");
+
+        List<String> contactsNotSent;
+        try {
+            contactsNotSent = apiAdapter.requestContactsNotSent();
+        } catch (Exception e) {
+            statusLogger.logError("Ocorreu um erro ao fazer uma requisição para a API: " + e.getMessage());
+            return Result.failure();
+        }
 
         statusLogger.logInfo("Foi feita uma requisição para a API.");
         if (contactsNotSent.isEmpty()) {

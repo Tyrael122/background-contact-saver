@@ -27,7 +27,7 @@ public class FileLogger {
         logToFile(() -> logger.info(message));
     }
 
-    public void logToFile(Runnable loggerFunction) {
+    private void logToFile(Runnable loggerFunction) {
         FileHandler fh = getFileHandlerToLogToFile();
         logger.addHandler(fh);
 

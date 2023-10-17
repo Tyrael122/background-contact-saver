@@ -37,10 +37,10 @@ class AndroidContactServiceManager {
         return true;
       }
     } catch (e) {
-      statusLogger.logError("Error starting the service: $e");
+      statusLogger.logError("Ocorreu um erro ao iniciar o serviço: $e");
     }
 
-    statusLogger.logError("Error starting the service.");
+    statusLogger.logError("Ocorreu um erro ao iniciar o serviço.");
     return false;
   }
 
