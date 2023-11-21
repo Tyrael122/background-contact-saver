@@ -1,4 +1,4 @@
-package br.makesoftware.contacts_manager;
+package br.makesoftware.contacts_manager.services;
 
 import android.annotation.SuppressLint;
 import android.content.ContentProviderOperation;
@@ -7,83 +7,70 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
 
-import androidx.annotation.NonNull;
-import androidx.work.Operation;
-import androidx.work.WorkManager;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
-
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import br.makesoftware.contacts_manager.adapters.XmlApiAdapter;
-import br.makesoftware.contacts_manager.interfaces.ApiAdapter;
-import br.makesoftware.contacts_manager.utils.FileLogger;
-import br.makesoftware.contacts_manager.utils.ConcernedPeopleNotifier;
 import br.makesoftware.contacts_manager.constants.LogType;
+import br.makesoftware.contacts_manager.interfaces.ApiAdapter;
+import br.makesoftware.contacts_manager.utils.ConcernedPeopleNotifier;
+import br.makesoftware.contacts_manager.utils.FileLogger;
 
-public class ContactWorker extends Worker {
-    private final FileLogger fileLogger = new FileLogger(getApplicationContext().getFilesDir());
-    private final ConcernedPeopleNotifier concernedPeopleNotifier = new ConcernedPeopleNotifier(fileLogger, getApplicationContext());
-    private final ApiAdapter apiAdapter = new XmlApiAdapter(fileLogger);
+public class AutoContactSaver {
+    private final FileLogger fileLogger;
+    private final ConcernedPeopleNotifier concernedPeopleNotifier;
+    private final ApiAdapter apiAdapter;
 
-    public ContactWorker(@NonNull Context context, @NonNull WorkerParameters params) {
-        super(context, params);
+    private final Context context;
+
+    public AutoContactSaver(Context context) {
+        this.context = context;
+
+        fileLogger = new FileLogger(context.getFilesDir());
+        concernedPeopleNotifier = new ConcernedPeopleNotifier(fileLogger, context);
+        apiAdapter =  new XmlApiAdapter(fileLogger);
     }
 
-    public static boolean stopAllServices(Context context) {
-        Operation operation = WorkManager.getInstance(context).cancelAllWork();
-
-        try {
-            operation.getResult().get();
-        } catch (ExecutionException | InterruptedException e) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @NonNull
-    @Override
-    public Result doWork() {
+    public boolean savePendingContacts() {
         fileLogger.logInfo("Tentando fazer uma requisição para a API.", LogType.STATUS);
 
-        Result workResult;
+        boolean actionResult;
 
         List<String> contactsNotSent;
         try {
             contactsNotSent = apiAdapter.requestContactsNotSent();
         } catch (Exception e) {
-            String errorMessage =  "Ocorreu um erro ao fazer uma requisição para a API: " + e.getMessage();
+            String errorMessage = "Ocorreu um erro ao fazer uma requisição para a API: " + e.getMessage();
             concernedPeopleNotifier.sendErrorMessage(errorMessage);
 
-            return Result.failure();
+            return false;
         }
 
         fileLogger.logInfo("Foi feita uma requisição para a API.", LogType.STATUS);
 
         String infoMessage;
-
         if (contactsNotSent.isEmpty()) {
             infoMessage = "A requisição não trouxe nenhum contato.";
-            workResult = Result.success();
+            actionResult = true;
 
         } else {
             infoMessage = "A requisição trouxe " + contactsNotSent.size() + " contatos.";
-            workResult = saveContacts(contactsNotSent);
+            actionResult = saveContacts(contactsNotSent);
         }
 
         concernedPeopleNotifier.sendInfoMessage(infoMessage);
 
-        return workResult;
+        return actionResult;
     }
 
-    private Result saveContacts(List<String> contactsNotSent) {
-        boolean hasFailed = false;
+    private boolean saveContacts(List<String> contactsNotSent) {
+        boolean hasSucceeded = true;
 
         for (String contactPhone : contactsNotSent) {
             if (isContactSavedInPhone(contactPhone)) {
@@ -91,21 +78,20 @@ public class ContactWorker extends Worker {
                 continue;
             }
 
-            boolean hasContactBeenSaved = insertContact(contactPhone, contactPhone, getApplicationContext().getContentResolver());
+            boolean hasContactBeenSaved = insertContact(contactPhone, contactPhone, context.getContentResolver());
             if (hasContactBeenSaved)
                 fileLogger.logInfo("Contato " + contactPhone + " salvo com sucesso.", LogType.CONTACT);
             else {
                 fileLogger.logInfo("Não foi possível salvar o contato '" + contactPhone + "'.", LogType.CONTACT);
-                hasFailed = true;
+                hasSucceeded = false;
             }
         }
 
-        if (hasFailed) return Result.failure();
-        else return Result.success();
+        return hasSucceeded;
     }
 
     private boolean isContactSavedInPhone(String contactPhone) {
-        List<String> contacts = fetchAllContacts(getApplicationContext().getContentResolver());
+        List<String> contacts = fetchAllContacts(context.getContentResolver());
 
         return contacts.contains(contactPhone);
     }
@@ -134,7 +120,7 @@ public class ContactWorker extends Worker {
 
             ContentProviderResult[] results = contentResolver.applyBatch(ContactsContract.AUTHORITY, operations);
 
-            return results != null && results.length > 0;
+            return results.length > 0;
         } catch (OperationApplicationException | RemoteException e) {
             e.printStackTrace();
             return false;

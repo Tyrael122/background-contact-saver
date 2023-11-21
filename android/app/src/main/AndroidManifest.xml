@@ -11,6 +11,8 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
+        <service android:name=".services.ForegroundContactService" />
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

@@ -1,0 +1,104 @@
+package br.makesoftware.contacts_manager.services;
+
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Intent;
+import android.os.Build;
+import android.os.Handler;
+import android.os.IBinder;
+import android.widget.Toast;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+
+import br.makesoftware.contacts_manager.MainActivity;
+import br.makesoftware.contacts_manager.R;
+import br.makesoftware.contacts_manager.constants.NotificationChannel;
+import br.makesoftware.contacts_manager.utils.NotificationSender;
+
+public class ForegroundContactService extends Service {
+    private static long requestIntervalMinutes = 5;
+    private static final int ONGOING_NOTIFICATION_ID = 1;
+
+    private final Handler handler = new Handler();
+    private final Runnable apiRequestRunnable = new Runnable() {
+        @RequiresApi(api = Build.VERSION_CODES.O)
+        @Override
+        public void run() {
+            AutoContactSaver autoContactSaver = new AutoContactSaver(getApplicationContext());
+            autoContactSaver.savePendingContacts();
+
+            updateNextExecutionNotification();
+
+            handler.postDelayed(this, requestIntervalMinutes * 60 * 1000);
+        }
+    };
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        Notification onGoingNotification = createOnGoingNotification("O serviço está em execução.");
+        NotificationSender.sendNotification(onGoingNotification, ONGOING_NOTIFICATION_ID, getApplicationContext());
+
+        startForeground(ONGOING_NOTIFICATION_ID, onGoingNotification);
+
+        // Start the API request loop
+        handler.post(apiRequestRunnable);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private Notification createOnGoingNotification(String notificationText) {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        return new NotificationCompat.Builder(this, NotificationChannel.ONGOING.name())
+                .setContentTitle(NotificationSender.NOTIFICATION_DEFAULT_TITLE)
+                .setContentText(notificationText)
+                .setSmallIcon(R.drawable.launch_background)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .build();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
+
+        Toast.makeText(this, "Iniciando serviço...", Toast.LENGTH_SHORT).show();
+
+        return START_STICKY;
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        // Stop the API request loop when the service is destroyed
+        handler.removeCallbacks(apiRequestRunnable);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void updateNextExecutionNotification() {
+        DateTimeFormatter dtf = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss").toFormatter();
+        LocalDateTime nextExecution = LocalDateTime.now().plusMinutes(requestIntervalMinutes);
+
+        Notification onGoingNotification = createOnGoingNotification("Próxima execução agendada para às " + nextExecution.format(dtf));
+        NotificationSender.sendNotification(onGoingNotification, ONGOING_NOTIFICATION_ID, getApplicationContext());
+    }
+
+    public static void setRequestIntervalMinutes(int minutes) {
+        requestIntervalMinutes = minutes;
+    }
+}

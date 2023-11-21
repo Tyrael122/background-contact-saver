@@ -26,7 +26,7 @@ import br.makesoftware.contacts_manager.utils.FileLogger;
 import br.makesoftware.contacts_manager.constants.LogType;
 
 public class XmlApiAdapter implements ApiAdapter {
-    private FileLogger fileLogger;
+    private final FileLogger fileLogger;
     public XmlApiAdapter(FileLogger fileLogger) {
         this.fileLogger = fileLogger;
     }
@@ -81,7 +81,7 @@ public class XmlApiAdapter implements ApiAdapter {
         }
 
         List<String> telefones = new ArrayList<>();
-        JSONArray jsonArray = new JSONArray(jsonString.toString());
+        JSONArray jsonArray = new JSONArray(jsonString);
 
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);

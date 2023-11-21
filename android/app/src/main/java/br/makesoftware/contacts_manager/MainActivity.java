@@ -1,18 +1,17 @@
 package br.makesoftware.contacts_manager;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
+import static br.makesoftware.contacts_manager.constants.LogType.STATUS;
+
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
+import androidx.annotation.RequiresApi;
 
-import java.util.concurrent.TimeUnit;
-
+import br.makesoftware.contacts_manager.services.ForegroundContactService;
 import br.makesoftware.contacts_manager.utils.FileLogger;
-import br.makesoftware.contacts_manager.constants.LogType;
+import br.makesoftware.contacts_manager.utils.NotificationSender;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodCall;
@@ -20,14 +19,20 @@ import io.flutter.plugin.common.MethodChannel;
 
 public class MainActivity extends FlutterActivity {
     public static final String CHANNEL = "br.makesoftware.contacts_manager/channel";
+    private FileLogger fileLogger;
+
+    private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        createNotificationChannel();
+        NotificationSender.createAllNotificationChannels(getApplicationContext());
+
+        fileLogger = new FileLogger(getApplicationContext().getFilesDir());
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
@@ -37,16 +42,21 @@ public class MainActivity extends FlutterActivity {
                     boolean success = tryStartPeriodicService(call);
                     result.success(success);
                     break;
+
                 case "stopService":
-                    boolean hasStoppedSucessfully = ContactWorker.stopAllServices(getApplicationContext());
+                    boolean hasStoppedSucessfully = tryStopService();
+
                     result.success(hasStoppedSucessfully);
                     break;
+
                 case "logError":
-                    new FileLogger(getApplicationContext().getFilesDir()).logError(call.argument("message"), LogType.STATUS);
+                    new FileLogger(getApplicationContext().getFilesDir()).logError(call.argument("message"), STATUS);
                     break;
+
                 case "logInfo":
-                    new FileLogger(getApplicationContext().getFilesDir()).logInfo(call.argument("message"), LogType.STATUS);
+                    new FileLogger(getApplicationContext().getFilesDir()).logInfo(call.argument("message"), STATUS);
                     break;
+
                 default:
                     result.notImplemented();
                     break;
@@ -54,34 +64,38 @@ public class MainActivity extends FlutterActivity {
         });
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private boolean tryStartPeriodicService(MethodCall call) {
         try {
             int repeatInterval = call.argument("requestInterval");
-            PeriodicWorkRequest contactsWorkRequest = new PeriodicWorkRequest.Builder(ContactWorker.class, repeatInterval, TimeUnit.MINUTES).build();
-//            OneTimeWorkRequest contactsWorkRequest = new OneTimeWorkRequest.Builder(ContactWorker.class)
-//                    .setInitialDelay(10, TimeUnit.SECONDS)
-//                    .build();
+            ForegroundContactService.setRequestIntervalMinutes(repeatInterval);
 
-            WorkManager.getInstance(getApplicationContext()).enqueue(contactsWorkRequest);
+            intent = new Intent(this, ForegroundContactService.class);
+            getApplicationContext().startForegroundService(intent);
+
+            return true;
+
         } catch (Exception e) {
+            new FileLogger(getApplicationContext().getFilesDir()).logError(e.getMessage(), STATUS);
+
             return false;
         }
-
-        return true;
     }
 
-    public void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Example Channel";
-            String description = "This is an example notification channel";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+    private boolean tryStopService() {
+        boolean hasStoppedSucessfully = true;
+        try {
+            if (intent != null) {
+                getApplicationContext().stopService(intent);
+            }
 
-            NotificationChannel channel = new NotificationChannel(CHANNEL, name, importance);
-            channel.setDescription(description);
+        } catch (Exception e) {
+            hasStoppedSucessfully = false;
 
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
+            new FileLogger(getApplicationContext().getFilesDir()).logError(e.getMessage(), STATUS);
         }
+
+        return hasStoppedSucessfully;
     }
 }
 
