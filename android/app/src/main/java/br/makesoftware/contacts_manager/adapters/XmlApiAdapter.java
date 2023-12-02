@@ -26,11 +26,6 @@ import br.makesoftware.contacts_manager.utils.FileLogger;
 import br.makesoftware.contacts_manager.constants.LogType;
 
 public class XmlApiAdapter implements ApiAdapter {
-    private final FileLogger fileLogger;
-    public XmlApiAdapter(FileLogger fileLogger) {
-        this.fileLogger = fileLogger;
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public List<String> requestContactsNotSent() throws Exception {
@@ -43,7 +38,7 @@ public class XmlApiAdapter implements ApiAdapter {
             
             phoneNumbers = parsePhoneNumbersFromJsonResponse(in);
         } catch (JSONException e) {
-            fileLogger.logError("Ocorreu um erro ao obter o corpo da resposta http da API: '" + e.getMessage() + "'", LogType.STATUS);
+            FileLogger.logError("Ocorreu um erro ao obter o corpo da resposta http da API: '" + e.getMessage() + "'", LogType.STATUS);
             throw new RuntimeException(e);
         } finally {
             urlConnection.disconnect();
@@ -76,7 +71,7 @@ public class XmlApiAdapter implements ApiAdapter {
             StringBuilder jsonStringBuilder = parseStringFromInputStream(in);
             jsonString = sanitizeJsonStringBuilder(jsonStringBuilder);
         } catch (IOException e) {
-            fileLogger.logError("Ocorreu um erro ao concatenar em uma string o JSON retornado pela API:" + e.getMessage(), LogType.STATUS);
+            FileLogger.logError("Ocorreu um erro ao concatenar em uma string o JSON retornado pela API:" + e.getMessage(), LogType.STATUS);
             throw new RuntimeException(e);
         }
 

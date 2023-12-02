@@ -19,8 +19,6 @@ import io.flutter.plugin.common.MethodChannel;
 
 public class MainActivity extends FlutterActivity {
     public static final String CHANNEL = "br.makesoftware.contacts_manager/channel";
-    private FileLogger fileLogger;
-
     private Intent intent;
 
     @Override
@@ -29,7 +27,7 @@ public class MainActivity extends FlutterActivity {
 
         NotificationSender.createAllNotificationChannels(getApplicationContext());
 
-        fileLogger = new FileLogger(getApplicationContext().getFilesDir());
+        FileLogger.initialize(getApplicationContext().getFilesDir());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -50,11 +48,11 @@ public class MainActivity extends FlutterActivity {
                     break;
 
                 case "logError":
-                    new FileLogger(getApplicationContext().getFilesDir()).logError(call.argument("message"), STATUS);
+                    FileLogger.logError(call.argument("message"), STATUS);
                     break;
 
                 case "logInfo":
-                    new FileLogger(getApplicationContext().getFilesDir()).logInfo(call.argument("message"), STATUS);
+                    FileLogger.logInfo(call.argument("message"), STATUS);
                     break;
 
                 default:
@@ -76,7 +74,7 @@ public class MainActivity extends FlutterActivity {
             return true;
 
         } catch (Exception e) {
-            new FileLogger(getApplicationContext().getFilesDir()).logError(e.getMessage(), STATUS);
+            FileLogger.logError(e.getMessage(), STATUS);
 
             return false;
         }
@@ -92,7 +90,7 @@ public class MainActivity extends FlutterActivity {
         } catch (Exception e) {
             hasStoppedSucessfully = false;
 
-            new FileLogger(getApplicationContext().getFilesDir()).logError(e.getMessage(), STATUS);
+            FileLogger.logError(e.getMessage(), STATUS);
         }
 
         return hasStoppedSucessfully;

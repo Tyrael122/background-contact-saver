@@ -23,7 +23,6 @@ import br.makesoftware.contacts_manager.utils.ConcernedPeopleNotifier;
 import br.makesoftware.contacts_manager.utils.FileLogger;
 
 public class AutoContactSaver {
-    private final FileLogger fileLogger;
     private final ConcernedPeopleNotifier concernedPeopleNotifier;
     private final ApiAdapter apiAdapter;
 
@@ -31,14 +30,13 @@ public class AutoContactSaver {
 
     public AutoContactSaver(Context context) {
         this.context = context;
-
-        fileLogger = new FileLogger(context.getFilesDir());
-        concernedPeopleNotifier = new ConcernedPeopleNotifier(fileLogger, context);
-        apiAdapter =  new XmlApiAdapter(fileLogger);
+        
+        concernedPeopleNotifier = new ConcernedPeopleNotifier(context);
+        apiAdapter =  new XmlApiAdapter();
     }
 
     public boolean savePendingContacts() {
-        fileLogger.logInfo("Tentando fazer uma requisição para a API.", LogType.STATUS);
+        FileLogger.logInfo("Tentando fazer uma requisição para a API.", LogType.STATUS);
 
         boolean actionResult;
 
@@ -52,7 +50,7 @@ public class AutoContactSaver {
             return false;
         }
 
-        fileLogger.logInfo("Foi feita uma requisição para a API.", LogType.STATUS);
+        FileLogger.logInfo("Foi feita uma requisição para a API.", LogType.STATUS);
 
         String infoMessage;
         if (contactsNotSent.isEmpty()) {
@@ -74,15 +72,15 @@ public class AutoContactSaver {
 
         for (String contactPhone : contactsNotSent) {
             if (isContactSavedInPhone(contactPhone)) {
-                fileLogger.logInfo("O contato " + contactPhone + " já está salvo no celular.", LogType.CONTACT);
+                FileLogger.logInfo("O contato " + contactPhone + " já está salvo no celular.", LogType.CONTACT);
                 continue;
             }
 
             boolean hasContactBeenSaved = insertContact(contactPhone, contactPhone, context.getContentResolver());
             if (hasContactBeenSaved)
-                fileLogger.logInfo("Contato " + contactPhone + " salvo com sucesso.", LogType.CONTACT);
+                FileLogger.logInfo("Contato " + contactPhone + " salvo com sucesso.", LogType.CONTACT);
             else {
-                fileLogger.logInfo("Não foi possível salvar o contato '" + contactPhone + "'.", LogType.CONTACT);
+                FileLogger.logInfo("Não foi possível salvar o contato '" + contactPhone + "'.", LogType.CONTACT);
                 hasSucceeded = false;
             }
         }

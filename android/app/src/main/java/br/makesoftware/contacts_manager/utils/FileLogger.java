@@ -9,21 +9,23 @@ import java.util.logging.Logger;
 import br.makesoftware.contacts_manager.constants.LogType;
 
 public class FileLogger {
-    private final File filesDir;
+    private static File filesDir;
 
-    public FileLogger(File filesDir) {
-        this.filesDir = filesDir;
+    private FileLogger() {}
+
+    public static void initialize(File filesDir) {
+        FileLogger.filesDir = filesDir;
     }
 
-    public void logError(String message, LogType logType) {
+    public static void logError(String message, LogType logType) {
         logToFile(message, Level.SEVERE, logType.toString());
     }
 
-    public void logInfo(String message, LogType logType) {
+    public static void logInfo(String message, LogType logType) {
         logToFile(message, Level.INFO, logType.toString());
     }
 
-    private void logToFile(String message, Level logLevel, String logFilename) {
+    private static void logToFile(String message, Level logLevel, String logFilename) {
         Logger logger = Logger.getAnonymousLogger();
 
         FileHandler fh = getFileHandlerToLogToFile(logFilename);
@@ -34,7 +36,7 @@ public class FileLogger {
         fh.close();
     }
 
-    private FileHandler getFileHandlerToLogToFile(String logFilename) {
+    private static FileHandler getFileHandlerToLogToFile(String logFilename) {
         FileHandler fh;
         try {
             boolean appendToLogFile = true;

@@ -1,5 +1,7 @@
 package br.makesoftware.contacts_manager.services;
 
+import static br.makesoftware.contacts_manager.constants.LogType.STATUS;
+
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -9,6 +11,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
@@ -19,6 +22,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import br.makesoftware.contacts_manager.MainActivity;
 import br.makesoftware.contacts_manager.R;
 import br.makesoftware.contacts_manager.constants.NotificationChannel;
+import br.makesoftware.contacts_manager.utils.FileLogger;
 import br.makesoftware.contacts_manager.utils.NotificationSender;
 
 public class ForegroundContactService extends Service {
@@ -33,11 +37,19 @@ public class ForegroundContactService extends Service {
             AutoContactSaver autoContactSaver = new AutoContactSaver(getApplicationContext());
             autoContactSaver.savePendingContacts();
 
-            updateNextExecutionNotification();
+            updateConcernedPeopleAboutNextExecution();
 
             handler.postDelayed(this, requestIntervalMinutes * 60 * 1000);
         }
     };
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void updateConcernedPeopleAboutNextExecution() {
+        String nextExecutionText = getNextExecutionText();
+
+        updateNextExecutionNotification(nextExecutionText);
+        FileLogger.logInfo(nextExecutionText, STATUS);
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -90,12 +102,18 @@ public class ForegroundContactService extends Service {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void updateNextExecutionNotification() {
+    private void updateNextExecutionNotification(String nextExecutionText) {
+        Notification onGoingNotification = createOnGoingNotification(nextExecutionText);
+        NotificationSender.sendNotification(onGoingNotification, ONGOING_NOTIFICATION_ID, getApplicationContext());
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @NonNull
+    private static String getNextExecutionText() {
         DateTimeFormatter dtf = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss").toFormatter();
         LocalDateTime nextExecution = LocalDateTime.now().plusMinutes(requestIntervalMinutes);
 
-        Notification onGoingNotification = createOnGoingNotification("Próxima execução agendada para às " + nextExecution.format(dtf));
-        NotificationSender.sendNotification(onGoingNotification, ONGOING_NOTIFICATION_ID, getApplicationContext());
+        return "Próxima execução agendada para às " + nextExecution.format(dtf);
     }
 
     public static void setRequestIntervalMinutes(int minutes) {
