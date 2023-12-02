@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -28,6 +29,10 @@ import br.makesoftware.contacts_manager.utils.NotificationSender;
 public class ForegroundContactService extends Service {
     private static long requestIntervalMinutes = 5;
     private static final int ONGOING_NOTIFICATION_ID = 1;
+    private static final String WAKELOCK_TAG = "ContactsManager::WakelockTag";
+
+    private PowerManager.WakeLock wakeLock;
+
 
     private final Handler handler = new Handler();
     private final Runnable apiRequestRunnable = new Runnable() {
@@ -61,22 +66,17 @@ public class ForegroundContactService extends Service {
 
         startForeground(ONGOING_NOTIFICATION_ID, onGoingNotification);
 
+        acquireWakelock();
+
         // Start the API request loop
         handler.post(apiRequestRunnable);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    private Notification createOnGoingNotification(String notificationText) {
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
-
-        return new NotificationCompat.Builder(this, NotificationChannel.ONGOING.name())
-                .setContentTitle(NotificationSender.NOTIFICATION_DEFAULT_TITLE)
-                .setContentText(notificationText)
-                .setSmallIcon(R.drawable.launch_background)
-                .setContentIntent(pendingIntent)
-                .setOngoing(true)
-                .build();
+    private void acquireWakelock() {
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                WAKELOCK_TAG);
+        wakeLock.acquire();
     }
 
     @Override
@@ -97,14 +97,10 @@ public class ForegroundContactService extends Service {
     public void onDestroy() {
         super.onDestroy();
 
+        wakeLock.release();
+
         // Stop the API request loop when the service is destroyed
         handler.removeCallbacks(apiRequestRunnable);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void updateNextExecutionNotification(String nextExecutionText) {
-        Notification onGoingNotification = createOnGoingNotification(nextExecutionText);
-        NotificationSender.sendNotification(onGoingNotification, ONGOING_NOTIFICATION_ID, getApplicationContext());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -114,6 +110,26 @@ public class ForegroundContactService extends Service {
         LocalDateTime nextExecution = LocalDateTime.now().plusMinutes(requestIntervalMinutes);
 
         return "Próxima execução agendada para às " + nextExecution.format(dtf);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void updateNextExecutionNotification(String nextExecutionText) {
+        Notification onGoingNotification = createOnGoingNotification(nextExecutionText);
+        NotificationSender.sendNotification(onGoingNotification, ONGOING_NOTIFICATION_ID, getApplicationContext());
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private Notification createOnGoingNotification(String notificationText) {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        return new NotificationCompat.Builder(this, NotificationChannel.ONGOING.name())
+                .setContentTitle(NotificationSender.NOTIFICATION_DEFAULT_TITLE)
+                .setContentText(notificationText)
+                .setSmallIcon(R.drawable.launch_background)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .build();
     }
 
     public static void setRequestIntervalMinutes(int minutes) {
