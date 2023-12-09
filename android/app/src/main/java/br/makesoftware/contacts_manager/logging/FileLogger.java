@@ -1,4 +1,4 @@
-package br.makesoftware.contacts_manager.utils;
+package br.makesoftware.contacts_manager.logging;
 
 import java.io.File;
 import java.io.IOException;

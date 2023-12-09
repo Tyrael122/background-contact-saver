@@ -1,9 +1,13 @@
-package br.makesoftware.contacts_manager.utils;
+package br.makesoftware.contacts_manager.logging;
 
 import android.content.Context;
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
 
 import br.makesoftware.contacts_manager.constants.LogType;
 
+@RequiresApi(api = Build.VERSION_CODES.N)
 public class ConcernedPeopleNotifier {
     private final Context applicationContext;
 

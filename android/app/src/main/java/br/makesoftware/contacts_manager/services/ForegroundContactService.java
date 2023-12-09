@@ -7,7 +7,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.widget.Toast;
@@ -19,13 +18,17 @@ import androidx.core.app.NotificationCompat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import br.makesoftware.contacts_manager.MainActivity;
 import br.makesoftware.contacts_manager.R;
 import br.makesoftware.contacts_manager.constants.NotificationChannel;
-import br.makesoftware.contacts_manager.utils.FileLogger;
-import br.makesoftware.contacts_manager.utils.NotificationSender;
+import br.makesoftware.contacts_manager.logging.FileLogger;
+import br.makesoftware.contacts_manager.logging.NotificationSender;
 
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class ForegroundContactService extends Service {
     private static long requestIntervalMinutes = 5;
     private static final int ONGOING_NOTIFICATION_ID = 1;
@@ -33,30 +36,18 @@ public class ForegroundContactService extends Service {
 
     private PowerManager.WakeLock wakeLock;
 
+//    private final Handler handler = new Handler();
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-    private final Handler handler = new Handler();
-    private final Runnable apiRequestRunnable = new Runnable() {
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        @Override
-        public void run() {
-            AutoContactSaver autoContactSaver = new AutoContactSaver(getApplicationContext());
-            autoContactSaver.savePendingContacts();
+    private final Runnable apiRequestRunnable = () -> {
+        AutoContactSaver autoContactSaver = new AutoContactSaver(getApplicationContext());
+        autoContactSaver.savePendingContacts();
 
-            updateConcernedPeopleAboutNextExecution();
+        updateConcernedPeopleAboutNextExecution();
 
-            handler.postDelayed(this, requestIntervalMinutes * 60 * 1000);
-        }
+//            handler.postDelayed(this, requestIntervalMinutes * 60 * 1000);
     };
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void updateConcernedPeopleAboutNextExecution() {
-        String nextExecutionText = getNextExecutionText();
-
-        updateNextExecutionNotification(nextExecutionText);
-        FileLogger.logInfo(nextExecutionText, STATUS);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreate() {
         super.onCreate();
@@ -69,14 +60,8 @@ public class ForegroundContactService extends Service {
         acquireWakelock();
 
         // Start the API request loop
-        handler.post(apiRequestRunnable);
-    }
-
-    private void acquireWakelock() {
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-                WAKELOCK_TAG);
-        wakeLock.acquire();
+//        handler.post(apiRequestRunnable);
+        executor.scheduleAtFixedRate(apiRequestRunnable, 0, requestIntervalMinutes, TimeUnit.MINUTES);
     }
 
     @Override
@@ -100,25 +85,9 @@ public class ForegroundContactService extends Service {
         wakeLock.release();
 
         // Stop the API request loop when the service is destroyed
-        handler.removeCallbacks(apiRequestRunnable);
+        stopService();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    @NonNull
-    private static String getNextExecutionText() {
-        DateTimeFormatter dtf = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss").toFormatter();
-        LocalDateTime nextExecution = LocalDateTime.now().plusMinutes(requestIntervalMinutes);
-
-        return "Próxima execução agendada para às " + nextExecution.format(dtf);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void updateNextExecutionNotification(String nextExecutionText) {
-        Notification onGoingNotification = createOnGoingNotification(nextExecutionText);
-        NotificationSender.sendNotification(onGoingNotification, ONGOING_NOTIFICATION_ID, getApplicationContext());
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
     private Notification createOnGoingNotification(String notificationText) {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
@@ -130,6 +99,42 @@ public class ForegroundContactService extends Service {
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
                 .build();
+    }
+
+    private void acquireWakelock() {
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                WAKELOCK_TAG);
+        wakeLock.acquire();
+    }
+
+    private void updateConcernedPeopleAboutNextExecution() {
+        String nextExecutionText = getNextExecutionText();
+
+        updateNextExecutionNotification(nextExecutionText);
+        FileLogger.logInfo(nextExecutionText, STATUS);
+    }
+
+    @NonNull
+    private static String getNextExecutionText() {
+        DateTimeFormatter dtf = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss").toFormatter();
+        LocalDateTime nextExecution = LocalDateTime.now().plusMinutes(requestIntervalMinutes);
+
+        return "Próxima execução agendada para às " + nextExecution.format(dtf);
+    }
+
+    private void updateNextExecutionNotification(String nextExecutionText) {
+        Notification onGoingNotification = createOnGoingNotification(nextExecutionText);
+        NotificationSender.sendNotification(onGoingNotification, ONGOING_NOTIFICATION_ID, getApplicationContext());
+    }
+
+    private void stopService() {
+        executor.shutdownNow();
+        try {
+            executor.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            FileLogger.logError("Ocorreu um erro ao parar o serviço: " + e.getMessage(), STATUS);
+        }
     }
 
     public static void setRequestIntervalMinutes(int minutes) {

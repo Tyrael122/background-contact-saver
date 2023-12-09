@@ -22,7 +22,7 @@ import java.util.List;
 
 import br.makesoftware.contacts_manager.constants.EndpointsConstants;
 import br.makesoftware.contacts_manager.interfaces.ApiAdapter;
-import br.makesoftware.contacts_manager.utils.FileLogger;
+import br.makesoftware.contacts_manager.logging.FileLogger;
 import br.makesoftware.contacts_manager.constants.LogType;
 
 public class XmlApiAdapter implements ApiAdapter {

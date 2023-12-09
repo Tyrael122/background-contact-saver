@@ -10,8 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import br.makesoftware.contacts_manager.services.ForegroundContactService;
-import br.makesoftware.contacts_manager.utils.FileLogger;
-import br.makesoftware.contacts_manager.utils.NotificationSender;
+import br.makesoftware.contacts_manager.logging.FileLogger;
+import br.makesoftware.contacts_manager.logging.NotificationSender;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodCall;
