@@ -27,6 +27,7 @@ import br.makesoftware.contacts_manager.R;
 import br.makesoftware.contacts_manager.constants.NotificationChannel;
 import br.makesoftware.contacts_manager.logging.FileLogger;
 import br.makesoftware.contacts_manager.logging.NotificationSender;
+import br.makesoftware.contacts_manager.util.DateUtil;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class ForegroundContactService extends Service {
@@ -36,7 +37,6 @@ public class ForegroundContactService extends Service {
 
     private PowerManager.WakeLock wakeLock;
 
-//    private final Handler handler = new Handler();
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     private final Runnable apiRequestRunnable = () -> {
@@ -44,23 +44,19 @@ public class ForegroundContactService extends Service {
         autoContactSaver.savePendingContacts();
 
         updateConcernedPeopleAboutNextExecution();
-
-//            handler.postDelayed(this, requestIntervalMinutes * 60 * 1000);
     };
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        Notification onGoingNotification = createOnGoingNotification("O serviço está em execução.");
+        Notification onGoingNotification = createOnGoingNotification("O serviço está em execução com intervalo de " + requestIntervalMinutes + " minuto(s).");
         NotificationSender.sendNotification(onGoingNotification, ONGOING_NOTIFICATION_ID, getApplicationContext());
 
         startForeground(ONGOING_NOTIFICATION_ID, onGoingNotification);
 
         acquireWakelock();
 
-        // Start the API request loop
-//        handler.post(apiRequestRunnable);
         executor.scheduleAtFixedRate(apiRequestRunnable, 0, requestIntervalMinutes, TimeUnit.MINUTES);
     }
 
@@ -82,9 +78,10 @@ public class ForegroundContactService extends Service {
     public void onDestroy() {
         super.onDestroy();
 
+        Toast.makeText(this, "Parando serviço...", Toast.LENGTH_SHORT).show();
+
         wakeLock.release();
 
-        // Stop the API request loop when the service is destroyed
         stopService();
     }
 
@@ -117,10 +114,8 @@ public class ForegroundContactService extends Service {
 
     @NonNull
     private static String getNextExecutionText() {
-        DateTimeFormatter dtf = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss").toFormatter();
         LocalDateTime nextExecution = LocalDateTime.now().plusMinutes(requestIntervalMinutes);
-
-        return "Próxima execução agendada para às " + nextExecution.format(dtf);
+        return "Próxima execução agendada para às " + DateUtil.formateDate(nextExecution, "HH:mm:ss");
     }
 
     private void updateNextExecutionNotification(String nextExecutionText) {

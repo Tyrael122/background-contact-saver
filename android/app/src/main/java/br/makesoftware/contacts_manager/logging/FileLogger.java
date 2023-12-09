@@ -25,6 +25,10 @@ public class FileLogger {
         logToFile(message, Level.INFO, logType.toString());
     }
 
+    public static void logDebug(String message, LogType logType) {
+        logToFile(message, Level.FINE, logType.toString());
+    }
+
     private static void logToFile(String message, Level logLevel, String logFilename) {
         Logger logger = Logger.getAnonymousLogger();
 
