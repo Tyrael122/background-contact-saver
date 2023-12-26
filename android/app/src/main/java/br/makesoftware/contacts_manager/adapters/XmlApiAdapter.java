@@ -21,11 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.makesoftware.contacts_manager.constants.EndpointsConstants;
-import br.makesoftware.contacts_manager.interfaces.ApiAdapter;
+import br.makesoftware.contacts_manager.interfaces.ContactApiAdapter;
 import br.makesoftware.contacts_manager.logging.FileLogger;
 import br.makesoftware.contacts_manager.constants.LogType;
 
-public class XmlApiAdapter implements ApiAdapter {
+public class XmlApiAdapter implements ContactApiAdapter {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public List<String> requestContactsNotSent() throws Exception {

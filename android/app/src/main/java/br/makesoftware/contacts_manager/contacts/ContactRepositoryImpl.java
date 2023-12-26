@@ -1,8 +1,7 @@
-package br.makesoftware.contacts_manager.util;
+package br.makesoftware.contacts_manager.contacts;
 
 import android.annotation.SuppressLint;
 import android.content.ContentProviderOperation;
-import android.content.ContentProviderResult;
 import android.content.ContentResolver;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
@@ -12,21 +11,25 @@ import android.provider.ContactsContract;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContactManager {
-    private static final String REGEX_SOMENTE_NUMEROS = "[^0-9]";
+import br.makesoftware.contacts_manager.interfaces.ContactRepository;
+
+public class ContactRepositoryImpl implements ContactRepository {
+
     private final ContentResolver contentResolver;
 
-    public ContactManager(ContentResolver contentResolver) {
+    public ContactRepositoryImpl(ContentResolver contentResolver) {
         this.contentResolver = contentResolver;
     }
 
-    public boolean isContactSavedInPhone(String contactPhone) {
-        List<String> contacts = fetchAllContacts();
+    @Override
+    public boolean isContactSavedInPhone(String contactDisplayPhone) {
+        List<String> contacts = fetchAllContactDisplayNames();
 
-        return contacts.contains(contactPhone);
+        return contacts.contains(contactDisplayPhone);
     }
 
-    public List<String> fetchAllContacts() {
+    @Override
+    public List<String> fetchAllContactDisplayNames() {
         List<String> contactsList = new ArrayList<>();
 
         try (Cursor cursor = contentResolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null)) {
@@ -42,19 +45,8 @@ public class ContactManager {
         return contactsList;
     }
 
-    public static String formatContactPhone(String contactPhone) {
-        contactPhone = contactPhone.replaceAll(REGEX_SOMENTE_NUMEROS, "");
-
-        if (contactPhone.startsWith("55")) {
-            contactPhone = "+" + contactPhone;
-        } else {
-            contactPhone = "+55" + contactPhone;
-        }
-
-        return contactPhone;
-    }
-
-    public boolean insertContact(String name, String phoneNumber) throws RemoteException, OperationApplicationException {
+    @Override
+    public void saveContact(String contactDisplayName, String contactPhoneNumber) throws RemoteException, OperationApplicationException {
         ArrayList<ContentProviderOperation> operations = new ArrayList<>();
         ContentProviderOperation.Builder builder = ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI);
         builder.withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null);
@@ -65,18 +57,16 @@ public class ContactManager {
         builder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI);
         builder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
         builder.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE);
-        builder.withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name);
+        builder.withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, contactDisplayName);
         operations.add(builder.build());
 
         // Set the contact's phone number
         builder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI);
         builder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
         builder.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-        builder.withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phoneNumber);
+        builder.withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, contactPhoneNumber);
         operations.add(builder.build());
 
-        ContentProviderResult[] results = contentResolver.applyBatch(ContactsContract.AUTHORITY, operations);
-
-        return results.length > 0;
+        contentResolver.applyBatch(ContactsContract.AUTHORITY, operations);
     }
 }

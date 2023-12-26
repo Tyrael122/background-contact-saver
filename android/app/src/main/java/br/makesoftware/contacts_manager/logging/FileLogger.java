@@ -10,11 +10,16 @@ import br.makesoftware.contacts_manager.constants.LogType;
 
 public class FileLogger {
     private static File filesDir;
+    private static boolean shouldLog = true;
 
     private FileLogger() {}
 
     public static void initialize(File filesDir) {
         FileLogger.filesDir = filesDir;
+    }
+
+    public static void shouldLog(boolean shouldLog) {
+        FileLogger.shouldLog = shouldLog;
     }
 
     public static void logError(String message, LogType logType) {
@@ -30,6 +35,8 @@ public class FileLogger {
     }
 
     private static void logToFile(String message, Level logLevel, String logFilename) {
+        if (!shouldLog) return;
+
         Logger logger = Logger.getAnonymousLogger();
 
         FileHandler fh = getFileHandlerToLogToFile(logFilename);
