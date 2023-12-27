@@ -22,6 +22,7 @@ jobs:
         
     - name: Show current working directory
       run: pwd
+      working-directory: ./android
       
     - name: Run tests with Gradle
       run: ./gradlew test
