@@ -43,8 +43,12 @@ public class ForegroundContactService extends Service {
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-    private final AutoContactSaver autoContactSaver = createAutoContactSaver(getApplicationContext());
+    private AutoContactSaver autoContactSaver;
     private final Runnable apiRequestRunnable = () -> {
+        if (autoContactSaver == null) {
+            autoContactSaver = createAutoContactSaver(getApplicationContext());
+        }
+
         autoContactSaver.savePendingContacts();
 
         updateConcernedPeopleAboutNextExecution();
