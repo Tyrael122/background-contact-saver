@@ -20,13 +20,15 @@ jobs:
         distribution: 'temurin'
         cache: gradle
         
+    - name: Test with Gradle
+      uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+      with:
+        arguments: test
+        
     - name: Show current working directory
       run: pwd
       working-directory: ./android
-      
-    - name: Run tests with Gradle
-      run: ./gradlew test
-      working-directory: ./android
+    
 
     - uses: subosito/flutter-action@v2
       with:
