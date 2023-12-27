@@ -20,6 +20,9 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Show dir
+      run: ls
+      
     - name: Run tests with Gradle
       run: ./gradlew test
 
