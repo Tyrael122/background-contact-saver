@@ -25,7 +25,7 @@ jobs:
       
     - name: Run tests with Gradle
       run: ./gradlew test
-      working-directory: android/
+      working-directory: ./android
 
     - uses: subosito/flutter-action@v2
       with:
