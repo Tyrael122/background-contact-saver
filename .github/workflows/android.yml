@@ -25,6 +25,7 @@ jobs:
       with:
         arguments: testDebugUnitTest
         gradle-version: 6.5
+        working-directory: ./android
         
     - name: Show current working directory
       run: pwd
