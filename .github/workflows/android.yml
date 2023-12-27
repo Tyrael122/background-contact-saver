@@ -20,7 +20,9 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Show dir
+    - name: Change directory to android project
+      run: cd android
+    - name: Show files in current directory
       run: ls
       
     - name: Run tests with Gradle
