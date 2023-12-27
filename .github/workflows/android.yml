@@ -19,14 +19,13 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         cache: gradle
-
-    - name: Change directory to android project
-      run: cd android
-    - name: Show files in current directory
-      run: ls
+        
+    - name: Show current working directory
+      run: pwd
       
     - name: Run tests with Gradle
       run: ./gradlew test
+      working-directory: android/
 
     - uses: subosito/flutter-action@v2
       with:
