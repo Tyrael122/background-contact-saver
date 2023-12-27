@@ -3,19 +3,21 @@ package br.makesoftware.contacts_manager.services;
 import android.content.OperationApplicationException;
 import android.os.Build;
 import android.os.RemoteException;
+import android.provider.ContactsContract;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import br.makesoftware.contacts_manager.constants.LogType;
-import br.makesoftware.contacts_manager.contacts.ContactFormatter;
+import br.makesoftware.contacts_manager.contacts.PhoneNumberFormatter;
 import br.makesoftware.contacts_manager.interfaces.ContactRepository;
 import br.makesoftware.contacts_manager.interfaces.ContactApiAdapter;
 import br.makesoftware.contacts_manager.logging.ConcernedPeopleNotifier;
-import br.makesoftware.contacts_manager.logging.FileLogger;
+import br.makesoftware.contacts_manager.logging.Logger;
 import br.makesoftware.contacts_manager.util.DateUtil;
 
 public class AutoContactSaver {
@@ -32,26 +34,26 @@ public class AutoContactSaver {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void savePendingContacts() {
-        FileLogger.logInfo("Iniciando processamento às " + DateUtil.formateDate(LocalDateTime.now()) + ".", LogType.STATUS);
+        Logger.logInfo("Iniciando serviço às " + DateUtil.formateDate(LocalDateTime.now()) + ".", LogType.STATUS);
 
         List<String> contactsNotSent = tryFetchContactsNotSent();
         if (contactsNotSent == null) return;
 
-        String infoMessage;
+        String executedMessage = "O serviço foi executado.";
         if (contactsNotSent.isEmpty()) {
-            infoMessage = "A requisição não trouxe nenhum contato.";
-
-        } else {
-            infoMessage = "A requisição trouxe " + contactsNotSent.size() + " contato(s).";
-            saveContacts(contactsNotSent);
+            concernedPeopleNotifier.sendInfoMessage(executedMessage + " A requisição não trouxe nenhum contato.");
+            return;
         }
 
-        concernedPeopleNotifier.sendInfoMessage(infoMessage);
+        Logger.logInfo("A requisição trouxe " + contactsNotSent.size() + " contato(s).", LogType.STATUS);
+        saveContacts(contactsNotSent);
+
+        concernedPeopleNotifier.sendInfoMessage(executedMessage);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private List<String> tryFetchContactsNotSent() {
-        FileLogger.logInfo("Tentando fazer uma requisição para a API.", LogType.STATUS);
+        Logger.logInfo("Tentando fazer uma requisição para a API.", LogType.STATUS);
 
         List<String> contactsNotSent;
         try {
@@ -63,7 +65,7 @@ public class AutoContactSaver {
             return null;
         }
 
-        FileLogger.logInfo("Foi feita uma requisição para a API.", LogType.STATUS);
+        Logger.logInfo("Foi feita uma requisição para a API.", LogType.STATUS);
 
         return contactsNotSent;
     }
@@ -71,26 +73,18 @@ public class AutoContactSaver {
     private void saveContacts(List<String> contactPhones) {
         for (String contactDisplayPhone : contactPhones) {
 
-            contactDisplayPhone = ContactFormatter.removeSpaces(contactDisplayPhone);
+            contactDisplayPhone = PhoneNumberFormatter.removeNonDigits(contactDisplayPhone);
             if (isContactAlreadySavedInPhone(contactDisplayPhone)) continue;
 
-            String formattedContactPhone = formatContactPhone(contactDisplayPhone);
-            trySaveContact(contactDisplayPhone, formattedContactPhone);
+            String formattedPhone = PhoneNumberFormatter.formatPhone(contactDisplayPhone);
+            String formattedPhoneWithoutNine = PhoneNumberFormatter.removeNine(formattedPhone);
+            trySaveContact(contactDisplayPhone, formattedPhone, formattedPhoneWithoutNine);
         }
-    }
-
-    @NonNull
-    private static String formatContactPhone(String contactPhone) {
-        String formattedContactPhone = ContactFormatter.formatContactPhone(contactPhone);
-
-        FileLogger.logInfo("O contato '" + contactPhone + "' foi formatado para '" + formattedContactPhone + "'.", LogType.CONTACT);
-
-        return formattedContactPhone;
     }
 
     private boolean isContactAlreadySavedInPhone(String contactDisplayPhone) {
         if (contactRepository.isContactSavedInPhone(contactDisplayPhone)) {
-            FileLogger.logInfo("O contato '" + contactDisplayPhone + "' já está salvo no celular.", LogType.CONTACT);
+            Logger.logInfo("O contato '" + contactDisplayPhone + "' já está salvo no celular.", LogType.CONTACT);
 
             return true;
         }
@@ -98,13 +92,13 @@ public class AutoContactSaver {
         return false;
     }
 
-    private void trySaveContact(String formattedDisplayPhone, String formattedContactPhone) {
+    private void trySaveContact(String formattedDisplayPhone, String... formattedContactPhone) {
         try {
             contactRepository.saveContact(formattedDisplayPhone, formattedContactPhone);
-            FileLogger.logInfo("Contato '" + formattedDisplayPhone + "' salvo com sucesso com o número '" + formattedContactPhone + "'.", LogType.CONTACT);
+            Logger.logInfo("Contato '" + formattedDisplayPhone + "' salvo com sucesso com os números '" + Arrays.toString(formattedContactPhone) + "'.", LogType.CONTACT);
 
         } catch (RemoteException | OperationApplicationException e) {
-            FileLogger.logError("Ocorreu um erro ao salvar o contato '" + formattedContactPhone + "': " + e + ": " + e.getMessage(), LogType.CONTACT);
+            Logger.logError("Ocorreu um erro ao salvar o contato '" + formattedContactPhone + "': " + e + ": " + e.getMessage(), LogType.CONTACT);
         }
     }
 }

@@ -23,13 +23,14 @@ import java.util.concurrent.TimeUnit;
 
 import br.makesoftware.contacts_manager.MainActivity;
 import br.makesoftware.contacts_manager.R;
+import br.makesoftware.contacts_manager.adapters.MockApiAdapter;
 import br.makesoftware.contacts_manager.adapters.XmlApiAdapter;
 import br.makesoftware.contacts_manager.constants.NotificationChannel;
 import br.makesoftware.contacts_manager.interfaces.ContactRepository;
 import br.makesoftware.contacts_manager.contacts.ContactRepositoryImpl;
 import br.makesoftware.contacts_manager.interfaces.ContactApiAdapter;
 import br.makesoftware.contacts_manager.logging.ConcernedPeopleNotifier;
-import br.makesoftware.contacts_manager.logging.FileLogger;
+import br.makesoftware.contacts_manager.logging.Logger;
 import br.makesoftware.contacts_manager.logging.NotificationSender;
 import br.makesoftware.contacts_manager.util.DateUtil;
 
@@ -119,7 +120,7 @@ public class ForegroundContactService extends Service {
         String nextExecutionText = getNextExecutionText();
 
         updateNextExecutionNotification(nextExecutionText);
-        FileLogger.logInfo(nextExecutionText, STATUS);
+        Logger.logInfo(nextExecutionText, STATUS);
     }
 
     @NonNull
@@ -147,7 +148,7 @@ public class ForegroundContactService extends Service {
 //            }
 
         } catch (InterruptedException e) {
-            FileLogger.logError("Ocorreu um erro ao parar o serviço: " + e.getMessage(), STATUS);
+            Logger.logError("Ocorreu um erro ao parar o serviço: " + e.getMessage(), STATUS);
         }
     }
 

@@ -8,5 +8,5 @@ import java.util.List;
 public interface ContactRepository {
     boolean isContactSavedInPhone(String contactDisplayPhone);
     List<String> fetchAllContactDisplayNames();
-    void saveContact(String contactDisplayName, String contactPhoneNumber) throws RemoteException, OperationApplicationException;
+    void saveContact(String contactDisplayName, String... contactPhoneNumber) throws RemoteException, OperationApplicationException;
 }

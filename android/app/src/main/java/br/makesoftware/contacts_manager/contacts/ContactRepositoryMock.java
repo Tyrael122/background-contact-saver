@@ -33,39 +33,35 @@ public class ContactRepositoryMock implements ContactRepository {
     }
 
     @Override
-    public void saveContact(String contactDisplayName, String contactPhoneNumber) {
-        contacts.add(new ContactData(contactDisplayName, contactPhoneNumber));
-    }
-
-    public List<ContactData> fetchAllContacts() {
-        return contacts;
+    public void saveContact(String contactDisplayName, String... contactPhoneNumbers) {
+        contacts.add(new ContactData(contactDisplayName, List.of(contactPhoneNumbers)));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public boolean isContactSavedInPhone(String contactDisplayName, String contactPhoneNumber) {
-        return contacts.stream().anyMatch(contact -> contact.getDisplayName().equals(contactDisplayName) && contact.getPhoneNumber().equals(contactPhoneNumber));
+    public boolean isContactSavedInPhone(String contactDisplayName, String... contactPhoneNumbers) {
+        return getNumberOfMatches(contactDisplayName, contactPhoneNumbers) >= 1;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public long getNumberOfMatches(Predicate<ContactData> predicate) {
-        return contacts.stream().filter(predicate).count();
+    public long getNumberOfMatches(String contactDisplayName, String... contactPhoneNumbers) {
+        return contacts.stream().filter(contact -> contact.getDisplayName().equals(contactDisplayName) && contact.getPhoneNumbers().equals(List.of(contactPhoneNumbers))).count();
     }
 
     public static class ContactData {
         private final String displayName;
-        private final String phoneNumber;
+        private final List<String> phoneNumbers;
 
-        public ContactData(String displayName, String phoneNumber) {
+        public ContactData(String displayName, List<String> phoneNumbers) {
             this.displayName = displayName;
-            this.phoneNumber = phoneNumber;
+            this.phoneNumbers = phoneNumbers;
         }
 
         public String getDisplayName() {
             return displayName;
         }
 
-        public String getPhoneNumber() {
-            return phoneNumber;
+        public List<String> getPhoneNumbers() {
+            return phoneNumbers;
         }
     }
 }

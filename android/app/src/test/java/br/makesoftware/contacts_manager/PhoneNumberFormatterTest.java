@@ -5,72 +5,86 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import br.makesoftware.contacts_manager.contacts.ContactFormatter;
+import br.makesoftware.contacts_manager.contacts.PhoneNumberFormatter;
 
-public class ContactFormatterTest {
+public class PhoneNumberFormatterTest {
     private final String sampleContact = "11999999999";
     private final String sampleContactWithCountryCode = "+55" + sampleContact;
 
     @Test
     public void formatContactCorrectlyWhenWithCountryCode() {
-        String formattedContact = ContactFormatter.formatContactPhone(sampleContactWithCountryCode);
+        String formattedContact = PhoneNumberFormatter.formatPhone(sampleContactWithCountryCode);
 
         assertEquals(sampleContactWithCountryCode, formattedContact);
     }
 
     @Test
     public void formatContactCorrectlyWhenWithoutCountyCode() {
-        String formattedContact = ContactFormatter.formatContactPhone(sampleContact);
+        String formattedContact = PhoneNumberFormatter.formatPhone(sampleContact);
 
         assertEquals(sampleContactWithCountryCode, formattedContact);
     }
 
     @Test
     public void formatContactCorrectlyWithSpaces() {
-        String formattedContact = ContactFormatter.formatContactPhone("11 99999 9999");
+        String formattedContact = PhoneNumberFormatter.formatPhone("11 99999 9999");
 
         assertEquals(sampleContactWithCountryCode, formattedContact);
     }
 
     @Test
     public void formatContactCorrectlyWithDots() {
-        String formattedContact = ContactFormatter.formatContactPhone("11.99999.9999");
+        String formattedContact = PhoneNumberFormatter.formatPhone("11.99999.9999");
 
         assertEquals(sampleContactWithCountryCode, formattedContact);
     }
 
     @Test
     public void formatContactCorrectlyWithDashes() {
-        String formattedContact = ContactFormatter.formatContactPhone("11-99999-9999");
+        String formattedContact = PhoneNumberFormatter.formatPhone("11-99999-9999");
 
         assertEquals(sampleContactWithCountryCode, formattedContact);
     }
 
     @Test
     public void formatContactCorrectlyWithParentheses() {
-        String formattedContact = ContactFormatter.formatContactPhone("(11)99999-9999");
+        String formattedContact = PhoneNumberFormatter.formatPhone("(11)99999-9999");
 
         assertEquals(sampleContactWithCountryCode, formattedContact);
     }
 
     @Test
     public void formatContactCorrectlyWithParenthesesAndSpacesAndDashes() {
-        String formattedContact = ContactFormatter.formatContactPhone("(11) 99999-9999");
+        String formattedContact = PhoneNumberFormatter.formatPhone("(11) 99999-9999");
 
         assertEquals(sampleContactWithCountryCode, formattedContact);
     }
 
     @Test
     public void formatContactCorrectlyWithParenthesesAndDots() {
-        String formattedContact = ContactFormatter.formatContactPhone("(11) 99999.9999");
+        String formattedContact = PhoneNumberFormatter.formatPhone("(11) 99999.9999");
 
         assertEquals(sampleContactWithCountryCode, formattedContact);
     }
 
     @Test
     public void formatContactCorrectlyWithParenthesesAndDashesAndSpacesAndDotsAndPlus() {
-        String formattedContact = ContactFormatter.formatContactPhone("+55 (11) 99999-9999");
+        String formattedContact = PhoneNumberFormatter.formatPhone("+55 (11) 99999-9999");
 
         assertEquals(sampleContactWithCountryCode, formattedContact);
+    }
+
+    @Test
+    public void removeNineCorrectlyWhenSuitablePhone() {
+        String phoneWithoutNine = PhoneNumberFormatter.removeNine("+5511988888888");
+
+        assertEquals("+551188888888", phoneWithoutNine);
+    }
+
+    @Test
+    public void keepPhoneTheSameWhenNotSuitablePhoneAndRemovingNine() {
+        String phoneWithoutNine = PhoneNumberFormatter.removeNine("+551188888888");
+
+        assertEquals("+551188888888", phoneWithoutNine);
     }
 }

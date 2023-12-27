@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import br.makesoftware.contacts_manager.services.ForegroundContactService;
-import br.makesoftware.contacts_manager.logging.FileLogger;
+import br.makesoftware.contacts_manager.logging.Logger;
 import br.makesoftware.contacts_manager.logging.NotificationSender;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
@@ -27,7 +27,7 @@ public class MainActivity extends FlutterActivity {
 
         NotificationSender.createAllNotificationChannels(getApplicationContext());
 
-        FileLogger.initialize(getApplicationContext().getFilesDir());
+        Logger.initialize(getApplicationContext().getFilesDir());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -48,11 +48,11 @@ public class MainActivity extends FlutterActivity {
                     break;
 
                 case "logError":
-                    FileLogger.logError(call.argument("message"), STATUS);
+                    Logger.logError(call.argument("message"), STATUS);
                     break;
 
                 case "logInfo":
-                    FileLogger.logInfo(call.argument("message"), STATUS);
+                    Logger.logInfo(call.argument("message"), STATUS);
                     break;
 
                 default:
@@ -74,7 +74,7 @@ public class MainActivity extends FlutterActivity {
             return true;
 
         } catch (Exception e) {
-            FileLogger.logError(e.getMessage(), STATUS);
+            Logger.logError(e.getMessage(), STATUS);
 
             return false;
         }
@@ -90,7 +90,7 @@ public class MainActivity extends FlutterActivity {
         } catch (Exception e) {
             hasStoppedSucessfully = false;
 
-            FileLogger.logError(e.getMessage(), STATUS);
+            Logger.logError(e.getMessage(), STATUS);
         }
 
         return hasStoppedSucessfully;

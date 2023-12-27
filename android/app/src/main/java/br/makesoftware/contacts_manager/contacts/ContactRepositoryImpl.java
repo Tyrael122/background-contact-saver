@@ -46,7 +46,7 @@ public class ContactRepositoryImpl implements ContactRepository {
     }
 
     @Override
-    public void saveContact(String contactDisplayName, String contactPhoneNumber) throws RemoteException, OperationApplicationException {
+    public void saveContact(String contactDisplayName, String... contactPhoneNumbers) throws RemoteException, OperationApplicationException {
         ArrayList<ContentProviderOperation> operations = new ArrayList<>();
         ContentProviderOperation.Builder builder = ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI);
         builder.withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null);
@@ -60,12 +60,14 @@ public class ContactRepositoryImpl implements ContactRepository {
         builder.withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, contactDisplayName);
         operations.add(builder.build());
 
-        // Set the contact's phone number
-        builder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI);
-        builder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
-        builder.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-        builder.withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, contactPhoneNumber);
-        operations.add(builder.build());
+        for (String phoneNumber : contactPhoneNumbers) {
+            // Set the contact's phone number
+            builder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI);
+            builder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
+            builder.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+            builder.withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phoneNumber);
+            operations.add(builder.build());
+        }
 
         contentResolver.applyBatch(ContactsContract.AUTHORITY, operations);
     }

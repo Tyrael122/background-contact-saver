@@ -1,43 +1,62 @@
 package br.makesoftware.contacts_manager.logging;
 
+import android.util.Log;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import br.makesoftware.contacts_manager.constants.LogType;
 
-public class FileLogger {
+public class Logger {
+    // TODO: Refactor the file logging to a separate class (FileLogger).
     private static File filesDir;
-    private static boolean shouldLog = true;
+    private static boolean shouldLogToFile = true;
+    private static boolean shouldLogToLogCat = false;
 
-    private FileLogger() {}
-
-    public static void initialize(File filesDir) {
-        FileLogger.filesDir = filesDir;
+    private Logger() {
     }
 
-    public static void shouldLog(boolean shouldLog) {
-        FileLogger.shouldLog = shouldLog;
+    public static void initialize(File filesDir) {
+        Logger.filesDir = filesDir;
+    }
+
+    public static void shouldLogToFile(boolean shouldLogToFile) {
+        Logger.shouldLogToFile = shouldLogToFile;
     }
 
     public static void logError(String message, LogType logType) {
-        logToFile(message, Level.SEVERE, logType.toString());
+        log(message, Level.SEVERE, logType);
     }
 
     public static void logInfo(String message, LogType logType) {
-        logToFile(message, Level.INFO, logType.toString());
+        log(message, Level.INFO, logType);
     }
 
     public static void logDebug(String message, LogType logType) {
-        logToFile(message, Level.FINE, logType.toString());
+        log(message, Level.FINE, logType);
+    }
+
+    private static void log(String message, Level logLevel, LogType logType) {
+        System.out.println(logLevel + ": " + logType + ": " + message);
+
+        logToLogCat(logLevel, logType.toString(), message);
+        logToFile(message, logLevel, logType.toString());
+    }
+
+    private static void logToLogCat(Level logLevel, String tag, String message) {
+        if (!shouldLogToLogCat) return;
+
+        Log.println(logLevel.intValue(), tag, message);
     }
 
     private static void logToFile(String message, Level logLevel, String logFilename) {
-        if (!shouldLog) return;
+        if (!shouldLogToFile) return;
+        if (filesDir == null)
+            throw new IllegalStateException("The directory which to write the log file haven't been initialized.");
 
-        Logger logger = Logger.getAnonymousLogger();
+        java.util.logging.Logger logger = java.util.logging.Logger.getAnonymousLogger();
 
         FileHandler fh = getFileHandlerToLogToFile(logFilename);
         logger.addHandler(fh);
