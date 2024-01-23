@@ -67,6 +67,7 @@ public class MainActivity extends FlutterActivity {
         try {
             int repeatInterval = call.argument("requestInterval");
             ForegroundContactService.setRequestIntervalMinutes(repeatInterval);
+            ForegroundContactService.setUrl(call.argument("url"));
 
             intent = new Intent(this, ForegroundContactService.class);
             getApplicationContext().startForegroundService(intent);

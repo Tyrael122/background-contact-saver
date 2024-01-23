@@ -25,6 +25,7 @@ import br.makesoftware.contacts_manager.MainActivity;
 import br.makesoftware.contacts_manager.R;
 import br.makesoftware.contacts_manager.adapters.MockApiAdapter;
 import br.makesoftware.contacts_manager.adapters.XmlApiAdapter;
+import br.makesoftware.contacts_manager.constants.EndpointsConstants;
 import br.makesoftware.contacts_manager.constants.NotificationChannel;
 import br.makesoftware.contacts_manager.interfaces.ContactRepository;
 import br.makesoftware.contacts_manager.contacts.ContactRepositoryImpl;
@@ -54,6 +55,10 @@ public class ForegroundContactService extends Service {
 
         updateConcernedPeopleAboutNextExecution();
     };
+
+    public static void setUrl(String url) {
+        EndpointsConstants.RETRIEVE_CONTACTS_TO_SAVE_ENDPOINT = url;
+    }
 
     @NonNull
     private AutoContactSaver createAutoContactSaver(Context context) {

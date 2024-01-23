@@ -5,6 +5,7 @@ class SettingsPage extends StatelessWidget {
   SettingsPage({super.key});
 
   final _intervalRequestApiController = TextEditingController();
+  final _urlController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -23,45 +24,73 @@ class SettingsPage extends StatelessWidget {
                 height: 8,
               ),
               itemBuilder: (BuildContext context, int index) {
-                return ListTile(
-                  tileColor: const Color(0xFFD9D9D9),
-                  title: const Text("Intervalo de requisições na API (min)"),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5)),
-                  trailing: SizedBox(
-                    width: 50,
-                    height: 35,
-                    child: FutureBuilder(
-                      future:
-                          MyHomePage.contactManagerService.getRequestInterval(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<dynamic> snapshot) {
-                        _intervalRequestApiController.text = "15";
+                return Column(children: [
+                  ListTile(
+                    tileColor: const Color(0xFFD9D9D9),
+                    title: const Text("Intervalo de requisições na API (min)"),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5)),
+                    trailing: SizedBox(
+                      width: 50,
+                      height: 35,
+                      child: FutureBuilder(
+                        future: MyHomePage.contactManagerService
+                            .getRequestInterval(),
+                        builder: (BuildContext context,
+                            AsyncSnapshot<dynamic> snapshot) {
+                          _intervalRequestApiController.text = "15";
 
-                        if (snapshot.hasData) {
-                          _intervalRequestApiController.text =
-                              snapshot.data.toString();
-                        }
+                          if (snapshot.hasData) {
+                            _intervalRequestApiController.text =
+                                snapshot.data.toString();
+                          }
 
-                        return TextField(
-                          controller: _intervalRequestApiController,
-                          textAlignVertical: TextAlignVertical.top,
-                          keyboardType: TextInputType.number,
-                          maxLength: 2,
-                          maxLines: 1,
-                          style: const TextStyle(fontSize: 16, height: 1.2),
-                          decoration: const InputDecoration(
-                            isDense: true,
-                            counterText: '',
-                            border: OutlineInputBorder(),
-                            filled: true,
-                            fillColor: Colors.white,
-                          ),
-                        );
-                      },
+                          return TextField(
+                            controller: _intervalRequestApiController,
+                            textAlignVertical: TextAlignVertical.top,
+                            keyboardType: TextInputType.number,
+                            maxLength: 2,
+                            maxLines: 1,
+                            style: const TextStyle(fontSize: 16, height: 1.2),
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              counterText: '',
+                              border: OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                );
+                  FutureBuilder(
+                    future: MyHomePage.contactManagerService
+                        .getUrl(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<dynamic> snapshot) {
+                      _urlController.text = "URL AQUI";
+
+                      if (snapshot.hasData) {
+                        _urlController.text =
+                            snapshot.data.toString();
+                      }
+
+                      return TextField(
+                        controller: _urlController,
+                        textAlignVertical: TextAlignVertical.top,
+                        keyboardType: TextInputType.text,
+                        style: const TextStyle(fontSize: 16, height: 1.2),
+                        decoration: const InputDecoration(
+                          counterText: '',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      );
+                    },
+                  ),
+                ]);
               },
             ),
           ),
@@ -73,6 +102,8 @@ class SettingsPage extends StatelessWidget {
               onPressed: () {
                 MyHomePage.contactManagerService
                     .setInterval(int.parse(_intervalRequestApiController.text));
+                MyHomePage.contactManagerService
+                    .setUrl(_urlController.text);
               },
               child: const Text("Salvar"))
         ],

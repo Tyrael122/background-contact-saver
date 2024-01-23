@@ -12,6 +12,8 @@ class AndroidContactServiceManager {
   final Logger statusLogger = StatusLogger();
 
   static const String _contactServiceKey = "fetchContactsFromApi";
+  static const String _urlKey = "url";
+
   static const String _requestIntervalInMinKey = "requestIntervalInMin";
 
   final _channel = AndroidPlataformConstants.methodChannel;
@@ -19,6 +21,11 @@ class AndroidContactServiceManager {
   void setInterval(int requestIntervalInMin) async {
     final preferences = await SharedPreferences.getInstance();
     preferences.setInt(_requestIntervalInMinKey, requestIntervalInMin);
+  }
+
+  void setUrl(String url) async {
+    final preferences = await SharedPreferences.getInstance();
+    preferences.setString(_urlKey, url);
   }
 
   Future<bool> startService() async {
@@ -72,6 +79,17 @@ class AndroidContactServiceManager {
     }
   }
 
+  Future<String> getUrl() async {
+    final preferences = await SharedPreferences.getInstance();
+    String? url = preferences.getString(_urlKey);
+
+    if (url != null) {
+      return url;
+    } else {
+      throw Exception("Url não definida");
+    }
+  }
+
   Future<bool> isServiceRunning() async {
     final preferences = await SharedPreferences.getInstance();
     return preferences.containsKey(_contactServiceKey);
@@ -79,7 +97,7 @@ class AndroidContactServiceManager {
 
   Future<bool> _callAndroidMethodToStartService() async {
     return await _channel.invokeMethod(
-        "startService", {"requestInterval": await getRequestInterval()});
+        "startService", {"requestInterval": await getRequestInterval(), "url": await getUrl()});
   }
 
   Future<bool> _callAndroidMethodToStopService() async {

@@ -55,8 +55,6 @@ public class XmlApiAdapter implements ContactApiAdapter {
             url = new URL(EndpointsConstants.RETRIEVE_CONTACTS_TO_SAVE_ENDPOINT);
             urlConnection = (HttpURLConnection) url.openConnection();
 
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
